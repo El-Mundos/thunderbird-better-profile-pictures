@@ -1417,6 +1417,127 @@ function setupEventListeners(threadTree, eventsToListen, window) {
   });
 }
 
+const MSG_VIEW_FLAG_DUMMY = 0x20000000;
+
+/**
+ * Returns the per-window main-process cache mapping a message key to its
+ * already-resolved avatar payload. This lets us repaint recycled rows (e.g.
+ * when scrolling back up) instantly, with no round-trip to the background.
+ * @param {Object} window - The content window.
+ * @returns {Map<number, Object>}
+ */
+function getAvatarPaintCache(window) {
+  if (!window.__apAvatarPaintCache) {
+    window.__apAvatarPaintCache = new Map();
+  }
+  return window.__apAvatarPaintCache;
+}
+
+/**
+ * Normalizes a threadTree._rows key to a numeric row index.
+ * @param {number|string} key
+ * @returns {number}
+ */
+function toRowIndex(key) {
+  return typeof key === "number" ? key : parseInt(key, 10);
+}
+
+/**
+ * Builds a stable cache key for a message header. messageKey is only unique
+ * within a folder, so the folder URI is included to avoid cross-folder
+ * collisions.
+ * @param {Object} hdr - nsIMsgDBHdr
+ * @returns {string}
+ */
+function msgCacheKey(hdr) {
+  const folderUri = hdr.folder?.URI || "";
+  return `${folderUri}:${hdr.messageKey}`;
+}
+
+/**
+ * Repaints every currently-rendered row from the main-process paint cache.
+ * Synchronous and cheap (bounded to visible rows); rows whose avatar is
+ * unchanged are skipped by installOnRow, so this never flickers. Rows with no
+ * cache entry yet (never-seen senders) are left for the background to resolve.
+ * @param {Object} window - The content window.
+ */
+function repaintVisibleFromCache(window) {
+  const threadTree = window?.threadTree;
+  if (!threadTree || !threadTree._view || !threadTree._rows) {
+    return;
+  }
+  const view = threadTree._view;
+  const cache = getAvatarPaintCache(window);
+  if (cache.size === 0) {
+    return;
+  }
+  for (const key of threadTree._rows.keys()) {
+    const index = toRowIndex(key);
+    if (!Number.isInteger(index)) {
+      continue;
+    }
+    try {
+      if (view.getFlagsAt && view.getFlagsAt(index) & MSG_VIEW_FLAG_DUMMY) {
+        continue;
+      }
+      const hdr = view.getMsgHdrAt ? view.getMsgHdrAt(index) : null;
+      if (!hdr) {
+        continue;
+      }
+      const cached = cache.get(msgCacheKey(hdr));
+      if (!cached) {
+        continue;
+      }
+      const row = threadTree._rows.get(key);
+      if (row) {
+        installOnRow(window.document, cached, row, false);
+      }
+    } catch (_e) {
+      // Skip any row we can't resolve.
+    }
+  }
+}
+
+/**
+ * Installs a single persistent scroll + mutation listener per window that
+ * repaints visible rows from the paint cache (rAF-debounced). This is the
+ * gap-free path that keeps avatars painted while scrolling — especially when
+ * scrolling back up into rows Thunderbird recycled and blanked.
+ * @param {Object} window - The content window.
+ */
+function ensurePersistentRepaint(window) {
+  if (window.__apPersistentRepaintInstalled) {
+    return;
+  }
+  const threadTree = window?.threadTree;
+  if (!threadTree) {
+    return;
+  }
+  window.__apPersistentRepaintInstalled = true;
+
+  let scheduled = false;
+  const schedule = () => {
+    if (scheduled) {
+      return;
+    }
+    scheduled = true;
+    const run = () => {
+      scheduled = false;
+      repaintVisibleFromCache(window);
+    };
+    if (window.requestAnimationFrame) {
+      window.requestAnimationFrame(run);
+    } else {
+      window.setTimeout(run, 16);
+    }
+  };
+
+  threadTree.addEventListener("scroll", schedule, { passive: true });
+  const observer = new window.MutationObserver(schedule);
+  observer.observe(threadTree, { childList: true, subtree: true });
+  window.__apPersistentRepaintObserver = observer;
+}
+
 // biome-ignore lint/correctness/noUnusedVariables: Variable name required by the extension API
 var headerApi = class extends ExtensionCommon.ExtensionAPI {
   getAPI(context) {
@@ -1595,12 +1716,30 @@ var headerApi = class extends ExtensionCommon.ExtensionAPI {
             return { status: "failed" };
           }
           installCss(window);
+          ensurePersistentRepaint(window);
+
+          const view = threadTree._view;
+          const cache = getAvatarPaintCache(window);
+          // Keep the cache from growing without bound on very long sessions.
+          if (cache.size > 4000) {
+            cache.clear();
+          }
 
           for (const [indexStr, url] of Object.entries(urls)) {
             const index = parseInt(indexStr, 10);
             const row = threadTree._rows.get(index);
             if (!row) {
               continue;
+            }
+            // Cache by the stable message key so we can repaint this row later
+            // (after Thunderbird recycles it) without asking the background.
+            try {
+              const hdr = view?.getMsgHdrAt ? view.getMsgHdrAt(index) : null;
+              if (hdr) {
+                cache.set(msgCacheKey(hdr), url);
+              }
+            } catch (_e) {
+              // Non-fatal: we just won't have a cache entry for this row.
             }
             try {
               await installOnRow(window.document, url, row, false);
