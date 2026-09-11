@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "__MSG_extensionName__",
-  "version": "2.5.0",
+  "version": "2.5.1",
   "description": "__MSG_extensionDescription__",
   "author": "Noam SCHMITT",
   "homepage_url": "https://astucesweb.fr/projets/auto-profile-picture/",
@@ -41,8 +41,7 @@
   "browser_specific_settings": {
     "gecko": {
       "id": "autoprofilepicture@astucesweb.fr",
-      "strict_min_version": "112.0",
-      "strict_max_version": "149.*"
+      "strict_min_version": "112.0"
     }
   }
 }
