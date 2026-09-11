@@ -208,5 +208,32 @@
   },
   "cacheIntervalNever": {
     "message": "Never"
+  },
+  "appearanceStyleHeader": {
+    "message": "Appearance"
+  },
+  "avatarShapeLabel": {
+    "message": "Picture shape"
+  },
+  "avatarShapeCircle": {
+    "message": "Circle"
+  },
+  "avatarShapeRounded": {
+    "message": "Rounded square"
+  },
+  "avatarShapeSquare": {
+    "message": "Square"
+  },
+  "initialsColorLabel": {
+    "message": "Colour for initials"
+  },
+  "initialsColorAuto": {
+    "message": "One per sender"
+  },
+  "initialsColorNeutral": {
+    "message": "Same grey for everyone"
+  },
+  "initialsColorHelp": {
+    "message": "Initials are shown when no picture is found. A colour per sender makes them easier to tell apart; one grey keeps a long list calmer."
   }
 }

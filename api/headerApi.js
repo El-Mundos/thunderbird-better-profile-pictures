@@ -730,6 +730,30 @@ async function installOnMessageHeader(window, urls) {
  *
  * @param {Object} window - The window object.
  */
+/**
+ * Avatar appearance, mirrored from settings by setAvatarStyle. Held at module
+ * scope so every window picks up the current value when its CSS is installed,
+ * including windows opened after the setting was changed.
+ */
+const avatarStyleState = {
+  radius: "50%",
+};
+
+/**
+ * Writes the current appearance onto a window's root element.
+ * @param {Object} window - The content window.
+ */
+function applyAvatarStyle(window) {
+  try {
+    window.document.documentElement.style.setProperty(
+      "--recipient-avatar-radius",
+      avatarStyleState.radius,
+    );
+  } catch (_e) {
+    // A window being torn down; nothing to style.
+  }
+}
+
 function installCss(window) {
   const { document } = window;
   const avatarCss = `
@@ -739,7 +763,7 @@ function installCss(window) {
   .recipient-avatar {
     height: var(--recipient-avatar-size);
     width: var(--recipient-avatar-size);
-    border-radius: 50%;
+    border-radius: var(--recipient-avatar-radius, 50%);
     text-align: center;
     overflow: hidden;
     align-items: center;
@@ -795,6 +819,10 @@ function installCss(window) {
     top: var(--top-position);
   }
   `;
+  // Applied on every call, not just the first: the <style> element below is
+  // installed once and deduped, so a shape change after that would never reach
+  // the page if it lived in the stylesheet text.
+  applyAvatarStyle(window);
   if (document.getElementById("auto-profile-picture-style")) {
     return;
   }
@@ -1692,6 +1720,35 @@ var headerApi = class extends ExtensionCommon.ExtensionAPI {
             } catch (e) {
               console.error("paintRowAvatars error", e);
             }
+          }
+          return { status: "success" };
+        },
+
+        /**
+         * Sets the avatar appearance for this and all future windows.
+         *
+         * @param {number} tabId - The tab ID.
+         * @param {string} styleJSON - JSON { radius }.
+         * @returns {Object} - Status object.
+         */
+        async setAvatarStyle(tabId, styleJSON) {
+          try {
+            const style = JSON.parse(styleJSON);
+            if (typeof style.radius === "string") {
+              avatarStyleState.radius = style.radius;
+            }
+          } catch (error) {
+            console.error("setAvatarStyle: bad payload", error);
+            return { status: "failed" };
+          }
+          try {
+            const { nativeTab } = context.extension.tabManager.get(tabId);
+            const window = getContentWindow(nativeTab);
+            if (window) {
+              applyAvatarStyle(window);
+            }
+          } catch (_e) {
+            // No live window yet; the next installCss picks the value up.
           }
           return { status: "success" };
         },
