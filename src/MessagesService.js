@@ -461,15 +461,92 @@ class MessagesService {
     this.updateLastDisplayInboxListCall();
     this.processId++;
     const currentProcessId = this.processId;
-    const { currentMessages, tabId, firstDisplayedMessageId } =
-      await this.getMessagesAndTabId(tab);
-    await this.processMessagesInboxList(
-      currentMessages,
-      tabId,
-      0,
-      firstDisplayedMessageId,
-      currentProcessId,
+    await this.displayVisibleRows(currentProcessId, tab);
+  }
+
+  /**
+   * Viewport-only inbox-list decoration.
+   *
+   * Instead of walking the whole folder to map avatars to global message
+   * offsets, this reads ONLY the rows currently rendered on screen (bounded to
+   * ~a few dozen regardless of folder size), resolves their avatars, paints
+   * them, then re-arms a listener so the next scroll / view change repaints the
+   * new set of visible rows. This is what makes big folders fast.
+   *
+   * @param {number} currentProcessId - Guards against overlapping runs.
+   * @param {Object} tab - The tab object (may be null).
+   */
+  async displayVisibleRows(currentProcessId, tab) {
+    const tabId = await this.getMailTabId(tab);
+
+    const rows = await browser.headerApi.getVisibleRowMessages(tabId);
+    if (currentProcessId !== this.processId) {
+      return;
+    }
+
+    // Resolve each visible row's correspondent (memoized, cheap).
+    const resolved = (
+      await Promise.all(
+        rows.map(async ({ index, message }) => {
+          try {
+            const author = await this.mailService.getCorrespondent(
+              message,
+              "inboxList",
+            );
+            return { index, author };
+          } catch (_e) {
+            return null;
+          }
+        }),
+      )
+    ).filter(Boolean);
+
+    if (currentProcessId !== this.processId) {
+      return;
+    }
+
+    // Single paint per pass: each row gets its final value (avatar if we have
+    // one, otherwise initials). Painting the final state in one shot — rather
+    // than initials-then-avatar — means the paint helper can skip rows whose
+    // value is unchanged, so stable rows never flicker. Only genuinely new or
+    // recycled rows actually mutate the DOM.
+    const urls = {};
+    await Promise.all(
+      resolved.map(async ({ index, author }) => {
+        const identifier = author.getEmail() || author.getAuthor() || "";
+        try {
+          const url = await this.avatarService.getAvatar(author);
+          if (url && typeof url === "object") {
+            urls[index] = {
+              value: url.value ?? "",
+              color: url.color ?? null,
+              identifier: url.identifier || identifier,
+            };
+            return;
+          }
+          if (url) {
+            urls[index] = { value: url, identifier };
+            return;
+          }
+        } catch (_e) {
+          // Fall through to initials.
+        }
+        urls[index] = RecipientInitial.buildInitials(author);
+      }),
     );
+
+    if (currentProcessId !== this.processId) {
+      return;
+    }
+    await browser.headerApi.paintRowAvatars(tabId, JSON.stringify(urls));
+
+    // Re-arm: block until the next relevant view change (scroll, folder
+    // change, sort, row recycle), then repaint the new visible set. Each pass
+    // is bounded to visible rows, so this loop is cheap.
+    if (currentProcessId !== this.processId) {
+      return;
+    }
+    await this.installDOMlistener(tabId);
   }
 }
 
