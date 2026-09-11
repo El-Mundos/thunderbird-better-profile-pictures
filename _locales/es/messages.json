@@ -212,5 +212,38 @@
   },
   "initialsColorHelp": {
     "message": "Las iniciales se muestran cuando no se encuentra ninguna imagen. Un color por remitente facilita distinguirlos; un solo gris hace la lista más tranquila."
+  },
+  "overridesHeader": {
+    "message": "Reglas para remitentes concretos"
+  },
+  "overridesDescription": {
+    "message": "Cambia lo que se muestra para una dirección o un dominio entero. Una regla para una dirección tiene prioridad sobre la de su dominio."
+  },
+  "overrideMatchPlaceholder": {
+    "message": "ejemplo.com o nombre@ejemplo.com"
+  },
+  "overrideUrlPlaceholder": {
+    "message": "https://ejemplo.com/logo.png"
+  },
+  "overrideModeHide": {
+    "message": "Mostrar iniciales"
+  },
+  "overrideModeUrl": {
+    "message": "Usar esta imagen"
+  },
+  "overrideAddButton": {
+    "message": "Añadir regla"
+  },
+  "overrideRemoveButton": {
+    "message": "Quitar"
+  },
+  "overrideErrorMatch": {
+    "message": "Escribe una dirección o un dominio."
+  },
+  "overrideErrorDuplicate": {
+    "message": "Ya existe una regla para esa dirección o dominio."
+  },
+  "overrideErrorUrl": {
+    "message": "Escribe una dirección de imagen que empiece por https://"
   }
 }

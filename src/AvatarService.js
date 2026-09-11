@@ -42,6 +42,27 @@ export default class AvatarService {
      * @type {{shape: string, initialsColor: string}|null}
      */
     this.appearance = null;
+    /**
+     * Per-sender rules.
+     * @type {Array<Object>|null}
+     */
+    this.overrides = null;
+  }
+
+  /**
+   * Returns the per-sender rules, loading them on first use.
+   * @returns {Promise<Array<Object>>}
+   */
+  async getOverrides() {
+    if (this.overrides === null) {
+      try {
+        this.overrides = await this.settingsManager.getDomainOverrides();
+      } catch (error) {
+        console.error("Error loading overrides, ignoring them", error);
+        this.overrides = [];
+      }
+    }
+    return this.overrides;
   }
 
   /**
@@ -147,6 +168,7 @@ export default class AvatarService {
     this.privacyMode = null;
     this.cacheRefresh = null;
     this.appearance = null;
+    this.overrides = null;
     this.sessionCacheAvatarUrls = {};
   }
 
@@ -198,6 +220,7 @@ export default class AvatarService {
         {
           providers: await this.getProviderList(),
           privacyMode: await this.getPrivacyMode(),
+          overrides: await this.getOverrides(),
           ...(await this.getCacheRefresh()),
         },
       );

@@ -5,6 +5,10 @@ import {
   isThirdParty,
 } from "../../providers/registry.js";
 import Author from "../../src/Author.js";
+import {
+  normalizeMatch,
+  sanitizeOverrides,
+} from "../../src/DomainOverrides.js";
 import CacheStorage from "../../src/CacheStorage.js";
 import ProfilePictureFetcher from "../../src/ProfilePictureFetcher.js";
 import SettingsManager from "../SettingsManager.js";
@@ -17,6 +21,12 @@ const contactsIntegrationCheckbox = document.getElementById(
 );
 const providerListElement = document.getElementById("providerList");
 const privacyModeSelect = document.getElementById("privacyMode");
+const overrideListElement = document.getElementById("overrideList");
+const overrideMatchInput = document.getElementById("overrideMatch");
+const overrideModeSelect = document.getElementById("overrideMode");
+const overrideUrlInput = document.getElementById("overrideUrl");
+const overrideAddButton = document.getElementById("overrideAdd");
+const overrideErrorElement = document.getElementById("overrideError");
 const avatarShapeSelect = document.getElementById("avatarShape");
 const initialsColorSelect = document.getElementById("initialsColor");
 const cacheFoundSelect = document.getElementById("cacheRefreshFound");
@@ -327,6 +337,109 @@ async function printCacheSize(domElement) {
   domElement.textContent = size + iconsText;
 }
 
+/**
+ * Per-sender rules as shown in the UI.
+ * @type {Array<Object>}
+ */
+let overrideState = [];
+
+async function persistOverrides() {
+  await settingsManager.setDomainOverrides(overrideState);
+  browser.runtime.sendMessage({ action: "refreshSettings" });
+  browser.runtime.sendMessage({ action: "displayInboxList" });
+}
+
+/**
+ * Shows a problem with the rule being added, or clears it.
+ * @param {string|null} messageKey - _locales key, or null to clear.
+ */
+function showOverrideError(messageKey) {
+  if (!messageKey) {
+    overrideErrorElement.hidden = true;
+    overrideErrorElement.textContent = "";
+    return;
+  }
+  overrideErrorElement.textContent = browser.i18n.getMessage(messageKey);
+  overrideErrorElement.hidden = false;
+}
+
+function renderOverrides() {
+  overrideListElement.textContent = "";
+  overrideState.forEach((override, index) => {
+    const row = document.createElement("li");
+    row.className = "override-row";
+
+    const match = document.createElement("span");
+    match.className = "override-match";
+    match.textContent = override.match;
+
+    const mode = document.createElement("span");
+    mode.className = "override-mode";
+    mode.textContent =
+      override.mode === "url"
+        ? browser.i18n.getMessage("overrideModeUrl")
+        : browser.i18n.getMessage("overrideModeHide");
+
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.className = "override-remove";
+    remove.textContent = browser.i18n.getMessage("overrideRemoveButton");
+    remove.addEventListener("click", async () => {
+      overrideState.splice(index, 1);
+      renderOverrides();
+      await persistOverrides();
+    });
+
+    row.append(match, mode, remove);
+    overrideListElement.append(row);
+  });
+}
+
+/**
+ * Only the pinned-picture mode needs a URL, so the field appears with it
+ * rather than sitting empty and unexplained the rest of the time.
+ */
+function syncOverrideForm() {
+  overrideUrlInput.hidden = overrideModeSelect.value !== "url";
+  showOverrideError(null);
+}
+
+async function addOverride() {
+  const match = normalizeMatch(overrideMatchInput.value);
+  if (!match) {
+    showOverrideError("overrideErrorMatch");
+    return;
+  }
+  if (overrideState.some((entry) => entry.match === match)) {
+    showOverrideError("overrideErrorDuplicate");
+    return;
+  }
+  const candidate =
+    overrideModeSelect.value === "url"
+      ? { match, mode: "url", url: overrideUrlInput.value }
+      : { match, mode: "hide" };
+
+  // Validate through the same function the lookup path uses, so the UI cannot
+  // accept a rule the fetcher would silently discard.
+  if (sanitizeOverrides([candidate]).length === 0) {
+    showOverrideError("overrideErrorUrl");
+    return;
+  }
+
+  overrideState = sanitizeOverrides([...overrideState, candidate]);
+  overrideMatchInput.value = "";
+  overrideUrlInput.value = "";
+  showOverrideError(null);
+  renderOverrides();
+  await persistOverrides();
+}
+
+async function initOverrides() {
+  overrideState = await settingsManager.getDomainOverrides();
+  syncOverrideForm();
+  renderOverrides();
+}
+
 async function initAppearance() {
   const { shape, initialsColor } = await settingsManager.getAppearance();
   avatarShapeSelect.value = shape;
@@ -475,6 +588,7 @@ function setupLocalization() {
 async function initialize() {
   await printCacheSize(cacheSizeElement);
   await initProviders();
+  await initOverrides();
   await initAppearance();
   await initCacheRefresh();
   initOptions();
@@ -485,6 +599,8 @@ async function initialize() {
     setContactsIntegration,
   );
   privacyModeSelect.addEventListener("change", setPrivacyMode);
+  overrideAddButton.addEventListener("click", addOverride);
+  overrideModeSelect.addEventListener("change", syncOverrideForm);
   avatarShapeSelect.addEventListener("change", setAvatarShape);
   initialsColorSelect.addEventListener("change", setInitialsColor);
   cacheFoundSelect.addEventListener("change", setCacheRefreshFound);

@@ -82,6 +82,22 @@
       <ul id="providerList" class="provider-list"></ul>
     </section>
 
+    <section class="group" id="overrides">
+      <h2 class="group-title" data-l10n-id="overridesHeader">Rules for specific senders</h2>
+      <p class="group-intro" data-l10n-id="overridesDescription">Override what is shown for one address or a whole domain. A rule for an address wins over a rule for its domain.</p>
+      <ul id="overrideList" class="override-list"></ul>
+      <div class="override-add">
+        <input type="text" id="overrideMatch" placeholder="example.com or name@example.com" data-l10n-attr-placeholder="overrideMatchPlaceholder" />
+        <select id="overrideMode">
+          <option value="hide" data-l10n-id="overrideModeHide">Show initials</option>
+          <option value="url" data-l10n-id="overrideModeUrl">Use this picture</option>
+        </select>
+        <input type="url" id="overrideUrl" placeholder="https://example.com/logo.png" data-l10n-attr-placeholder="overrideUrlPlaceholder" hidden />
+        <button type="button" id="overrideAdd" data-l10n-id="overrideAddButton">Add rule</button>
+      </div>
+      <p class="setting-help" id="overrideError" role="alert" hidden></p>
+    </section>
+
     <section class="group" id="cache">
       <h2 class="group-title" data-l10n-id="savedPicturesHeader">Saved pictures</h2>
       <div class="setting-row">
