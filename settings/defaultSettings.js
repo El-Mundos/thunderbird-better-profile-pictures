@@ -32,9 +32,9 @@ const defaultSettings = {
     "msn",
     "yandex",
   ],
-  notFoundRefreshIntervalMs: 1000 * 3600 * 24 * 30,
+  notFoundRefreshIntervalMs: 1000 * 3600 * 24 * 1,
   foundRefreshIntervalMs: 1000 * 3600 * 24 * 14,
-  WAIT_TIME_MS: 500,
+  WAIT_TIME_MS: 200,
   SUBBATCH_SIZE: 15,
   MAX_REQUEST_SIZE: 100,
 };
