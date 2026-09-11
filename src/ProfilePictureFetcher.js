@@ -223,18 +223,9 @@ export default class ProfilePictureFetcher {
           )
         : new VoidStrategy(),
       new OnlineStrategy(this, this.gravatarProvider, this.author),
-      new OnlineStrategy(this, this.libravatarProvider, this.author),
       new OnlineStrategy(this, this.provider, this.author),
-      new OnlineStrategy(this, this.webProvider, this.author),
       this.author.hasSubDomain()
         ? new OnlineStrategy(this, this.provider, this.author.removeSubDomain())
-        : new VoidStrategy(),
-      this.author.hasSubDomain()
-        ? new OnlineStrategy(
-            this,
-            this.webProvider,
-            this.author.removeSubDomain(),
-          )
         : new VoidStrategy(),
     ];
     return await this.executeStrategies(strategies);
@@ -249,7 +240,6 @@ export default class ProfilePictureFetcher {
       new ContactsStrategy(this, this.author),
       new CacheStrategy(this, this.author.getEmail()),
       new OnlineStrategy(this, this.gravatarProvider, this.author),
-      new OnlineStrategy(this, this.libravatarProvider, this.author),
     ];
     return await this.executeStrategies(strategies);
   }
