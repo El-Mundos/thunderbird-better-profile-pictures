@@ -91,6 +91,50 @@ export function getProviderDescriptor(id) {
 }
 
 /**
+ * Privacy modes, in increasing order of strictness.
+ *
+ * OFF      - every enabled provider runs; current behaviour.
+ * BALANCED - no third-party lookups. BIMI and the favicon scraper still run:
+ *            both talk only to the sender's own domain, which your mail client
+ *            already contacted by receiving the message.
+ * STRICT   - no network lookups of any kind. Address book photos, the on-disk
+ *            cache and generated initials only.
+ * @enum {string}
+ */
+export const PrivacyMode = {
+  OFF: "off",
+  BALANCED: "balanced",
+  STRICT: "strict",
+};
+
+/**
+ * Filters the provider chain according to the active privacy mode.
+ *
+ * Called before the chain is turned into lookup strategies, so anything
+ * removed here never issues a request. Local steps — address book, cache,
+ * initials — sit outside the provider chain and are unaffected by every mode.
+ *
+ * TODO(sergio): implement the filtering. The BALANCED case is the interesting
+ * one: the descriptor's `thirdParty` flag already tells you whether resolving a
+ * provider discloses the correspondent to an outside service, so the question
+ * is what that mode should actually guarantee.
+ *
+ * @param {Array<{id: string, enabled: boolean}>} providerList - Chain in order.
+ * @param {string} mode - A PrivacyMode value.
+ * @returns {Array<{id: string, enabled: boolean}>} Chain with disallowed
+ *   providers disabled (keep them in the list with enabled:false rather than
+ *   dropping them, so the options page can still show them greyed out and the
+ *   user's own on/off choices survive turning the mode back off).
+ */
+export function filterProvidersForPrivacy(providerList, mode) {
+  if (mode === PrivacyMode.OFF) {
+    return providerList;
+  }
+  // TODO(sergio): handle BALANCED and STRICT.
+  return providerList;
+}
+
+/**
  * Reconciles a stored provider list against the registry.
  *
  * Stored settings are written once and read for years, so they drift: a
