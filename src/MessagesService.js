@@ -299,13 +299,19 @@ class MessagesService {
     await this.processBatch(currentMessages, tabId, messagesOffset);
 
     if (hasNextMessages(currentMessages)) {
-      // Stop processing if we have covered the visible area plus a buffer
+      // Stop processing once we've covered the visible area plus a buffer.
+      //
+      // `firstDisplayedMessageId` comes from parsing a DOM row id, which can be
+      // NaN/undefined on some Thunderbird versions (the row-id format changed).
+      // If it is NaN, the original guard `X > NaN + 50` is always false, so the
+      // scan never stops and walks the ENTIRE folder (thousands of messages),
+      // pegging the UI. Coerce to a finite number so the guard works.
       const VISIBLE_BUFFER = 50;
-      if (
-        firstDisplayedMessageId !== undefined &&
-        messagesOffset + currentMessages.messages.length >
-          firstDisplayedMessageId + VISIBLE_BUFFER
-      ) {
+      const firstVisible = Number.isFinite(firstDisplayedMessageId)
+        ? firstDisplayedMessageId
+        : 0;
+      const processedCount = messagesOffset + currentMessages.messages.length;
+      if (processedCount > firstVisible + VISIBLE_BUFFER) {
         await this.installDOMlistener(tabId);
         return;
       }
