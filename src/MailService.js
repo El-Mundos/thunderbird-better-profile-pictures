@@ -8,6 +8,32 @@ import RecipientInitial from "./RecipientInitial.js";
 class MailService {
   constructor(avatarService) {
     this.avatarService = avatarService;
+    // Memoizes message.id -> Author so inbox-list re-renders (scroll, sort,
+    // selection) don't re-run parseMailboxString / messages.getFull for every
+    // row on every event. This is the main cause of scroll lag.
+    this.correspondentCache = new Map();
+  }
+
+  /**
+   * Retrieves the correspondent for the given message, memoized by message id.
+   * @param {Object} message - The message object.
+   * @param {string} [context="inboxList"] - The context of the request.
+   * @returns {Promise<Author>} - The correspondent.
+   */
+  async getCorrespondent(message, context = "inboxList") {
+    const cacheKey = `${message.id}::${context}`;
+    if (message.id != null && this.correspondentCache.has(cacheKey)) {
+      return this.correspondentCache.get(cacheKey);
+    }
+    const author = await this.resolveCorrespondent(message, context);
+    if (message.id != null) {
+      // Soft cap to keep memory flat on very large folders.
+      if (this.correspondentCache.size > 5000) {
+        this.correspondentCache.clear();
+      }
+      this.correspondentCache.set(cacheKey, author);
+    }
+    return author;
   }
 
   /**
@@ -31,7 +57,7 @@ class MailService {
    * @param {string} [context="inboxList"] - The context of the request. (inboxList or messageHeader)
    * @returns {Promise<Author>} - The correspondent's email address.
    */
-  async getCorrespondent(message, context = "inboxList") {
+  async resolveCorrespondent(message, context = "inboxList") {
     if (
       message.folder?.type === "sent" &&
       message.recipients.length > 0 &&
