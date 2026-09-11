@@ -1,5 +1,7 @@
+import SettingsManager from "../settings/SettingsManager.js";
 import defaultSettings from "../settings/defaultSettings.js";
 import Author from "./Author.js";
+import CacheStorage from "./CacheStorage.js";
 import ProfilePictureFetcher from "./ProfilePictureFetcher.js";
 
 const Status = {
@@ -15,6 +17,40 @@ export default class AvatarService {
      * Cache for storing avatar URLs for the session.
      * @type {Object.<string, string>}
      */
+    this.sessionCacheAvatarUrls = {};
+    this.settingsManager = new SettingsManager(new CacheStorage());
+    /**
+     * Provider chain, read once and reused. Every avatar lookup needs it, and
+     * re-reading it per row would put a storage round-trip on the hot path.
+     * Invalidated by refreshSettings when the options page changes it.
+     * @type {Array<{id: string, enabled: boolean}>|null}
+     */
+    this.providerList = null;
+  }
+
+  /**
+   * Returns the provider chain, loading it on first use.
+   * @returns {Promise<Array<{id: string, enabled: boolean}>>}
+   */
+  async getProviderList() {
+    if (this.providerList === null) {
+      try {
+        this.providerList = await this.settingsManager.getProviders();
+      } catch (error) {
+        console.error("Error loading provider settings, using defaults", error);
+        this.providerList = defaultSettings.providers;
+      }
+    }
+    return this.providerList;
+  }
+
+  /**
+   * Drops the cached provider chain so the next lookup re-reads it, and clears
+   * resolved avatars: a chain change can produce a different picture for a
+   * correspondent already resolved under the old order.
+   */
+  invalidateSettings() {
+    this.providerList = null;
     this.sessionCacheAvatarUrls = {};
   }
 
@@ -58,7 +94,14 @@ export default class AvatarService {
         return null;
       }
       this.sessionCacheAvatarUrls[lcAuthor] = Status.WAITING;
-      const profilePictureFetcher = new ProfilePictureFetcher(window, author);
+      const providerList = await this.getProviderList();
+      const profilePictureFetcher = new ProfilePictureFetcher(
+        window,
+        author,
+        "duckduckgo",
+        false,
+        providerList,
+      );
       this.sessionCacheAvatarUrls[lcAuthor] =
         await profilePictureFetcher.getAvatar();
     }
