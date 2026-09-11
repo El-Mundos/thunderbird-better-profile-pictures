@@ -7,10 +7,6 @@
     "message": "Vylepšete svou schránku Thunderbird pomocí automatických profilových obrázků, přidáním firemních log nebo avatarů k e-mailům a kontaktům, s podporou BIMI",
     "description": "Popis rozšíření."
   },
-  "featuresHeader": {
-    "message": "Funkce",
-    "description": "Nadpis pro sekci funkcí."
-  },
   "contactsIntegrationLabel": {
     "message": "Automaticky přidat profilový obrázek při ukládání kontaktu",
     "description": "Štítek pro zaškrtávací políčko integrace kontaktů."
@@ -22,34 +18,6 @@
   "inboxListDescription": {
     "message": "Povolte tuto možnost pro zobrazení profilových obrázků v seznamu doručené pošty. (pouze pro Thunderbird 121+)",
     "description": "Popis funkce seznamu doručené pošty."
-  },
-  "inboxListWarning": {
-    "message": "Varování: Tato funkce je experimentální a nemusí fungovat podle očekávání. Pokud narazíte na problémy, deaktivujte tuto možnost a nahlaste problém.",
-    "description": "Varovná zpráva pro funkci seznamu doručené pošty."
-  },
-  "inboxListKnownIssues": {
-    "message": "Známé problémy:",
-    "description": "Nadpis pro seznam známých problémů."
-  },
-  "inboxListIssueLaggyScrolling": {
-    "message": "Zpomalené rolování",
-    "description": "Známý problém: Zpomalené rolování."
-  },
-  "inboxListIssueVisualFlickering": {
-    "message": "Vizuální blikání (zástupné symboly a ikony)",
-    "description": "Známý problém: Vizuální blikání."
-  },
-  "inboxListIssueSlowFirstLoad": {
-    "message": "Pomalé při prvním načtení",
-    "description": "Známý problém: Pomalé při prvním načtení."
-  },
-  "inboxListIssueBigFolders": {
-    "message": "Problémy s velkými složkami",
-    "description": "Známý problém: Problémy s velkými složkami."
-  },
-  "cacheHeader": {
-    "message": "Cache",
-    "description": "Nadpis pro sekci cache."
   },
   "cacheSizeLabel": {
     "message": "Velikost:",

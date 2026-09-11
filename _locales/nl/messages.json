@@ -7,10 +7,6 @@
     "message": "Verbeter je Thunderbird-inbox met automatische profielfoto's, door bedrijfslogo's of avatars toe te voegen aan e-mails en contacten, en BIMI te ondersteunen",
     "description": "Beschrijving van de extensie."
   },
-  "featuresHeader": {
-    "message": "Functies",
-    "description": "Kop voor de functiesectie."
-  },
   "contactsIntegrationLabel": {
     "message": "Automatisch een profielfoto toevoegen bij het opslaan van een contact",
     "description": "Label voor het selectievakje voor contactintegratie."
@@ -22,34 +18,6 @@
   "inboxListDescription": {
     "message": "Schakel deze optie in om profielfoto's in de inboxlijst weer te geven. (alleen voor Thunderbird 121+)",
     "description": "Beschrijving van de functie van de inboxlijst."
-  },
-  "inboxListWarning": {
-    "message": "Waarschuwing: Deze functie is experimenteel en werkt mogelijk niet zoals verwacht. Als je problemen ondervindt, schakel deze optie dan uit en meld het probleem.",
-    "description": "Waarschuwingsbericht voor de functie van de inboxlijst."
-  },
-  "inboxListKnownIssues": {
-    "message": "Bekende problemen:",
-    "description": "Kop voor de lijst met bekende problemen."
-  },
-  "inboxListIssueLaggyScrolling": {
-    "message": "Trage scrollen",
-    "description": "Bekend probleem: Trage scrollen."
-  },
-  "inboxListIssueVisualFlickering": {
-    "message": "Visueel flikkeren (plaatsaanduidingen en pictogrammen)",
-    "description": "Bekend probleem: Visueel flikkeren."
-  },
-  "inboxListIssueSlowFirstLoad": {
-    "message": "Traag tijdens de eerste lading",
-    "description": "Bekend probleem: Traag tijdens de eerste lading."
-  },
-  "inboxListIssueBigFolders": {
-    "message": "Problemen met grote mappen",
-    "description": "Bekend probleem: Problemen met grote mappen."
-  },
-  "cacheHeader": {
-    "message": "Cache",
-    "description": "Kop voor de cache-sectie."
   },
   "cacheSizeLabel": {
     "message": "Grootte:",

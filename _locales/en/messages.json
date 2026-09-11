@@ -7,8 +7,8 @@
     "message": "Enhance your Thunderbird inbox with automated profile images, adding company logos or avatars to emails and contacts while supporting BIMI",
     "description": "Description of the extension."
   },
-  "featuresHeader": {
-    "message": "Features",
+  "appearanceHeader": {
+    "message": "Where pictures appear",
     "description": "Header for the features section."
   },
   "contactsIntegrationLabel": {
@@ -20,39 +20,19 @@
     "description": "Label for the inbox list checkbox."
   },
   "inboxListDescription": {
-    "message": "Enable this option to display profile pictures in the inbox message list. (only for Thunderbird 121+)",
+    "message": "Shows a picture next to each message in the list.",
     "description": "Description of the inbox list feature."
   },
-  "inboxListWarning": {
-    "message": "Warning: This feature is experimental and may not work as expected. If you encounter any issues, please disable this option and report the issue.",
+  "inboxListExperimentalNote": {
+    "message": "This feature reaches into parts of Thunderbird that can change between releases. If the message list misbehaves, turn it off and report the problem.",
     "description": "Warning message for the inbox list feature."
   },
-  "inboxListKnownIssues": {
-    "message": "Known issues are:",
-    "description": "Header for the known issues list."
-  },
-  "inboxListIssueLaggyScrolling": {
-    "message": "Laggy scrolling",
-    "description": "Known issue: Laggy scrolling."
-  },
-  "inboxListIssueVisualFlickering": {
-    "message": "Visual flickering (placeholders and icons)",
-    "description": "Known issue: Visual flickering."
-  },
-  "inboxListIssueSlowFirstLoad": {
-    "message": "Slow during the first load",
-    "description": "Known issue: Slow during the first load."
-  },
-  "inboxListIssueBigFolders": {
-    "message": "Struggles with big folders",
-    "description": "Known issue: Struggles with big folders."
-  },
-  "cacheHeader": {
-    "message": "Cache",
+  "savedPicturesHeader": {
+    "message": "Saved pictures",
     "description": "Header for the cache section."
   },
   "cacheSizeLabel": {
-    "message": "Size :",
+    "message": "Size:",
     "description": "Label for the cache size display."
   },
   "clearCacheButton": {
@@ -192,5 +172,11 @@
   "providerBadgeBlocked": {
     "message": "blocked",
     "description": "Badge marking a source disabled by the current privacy mode."
+  },
+  "settingsIntro": {
+    "message": "Show a picture for the people who write to you, taken from their address book entry or their organisation's logo."
+  },
+  "testDescription": {
+    "message": "See which picture an address resolves to with your current settings."
   }
 }

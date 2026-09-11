@@ -7,8 +7,8 @@
     "message": "Mejora tu bandeja de entrada de Thunderbird con imágenes de perfil automáticas, añadiendo logotipos de empresas o avatares a correos electrónicos y contactos, y soportando BIMI",
     "description": "Descripción de la extensión."
   },
-  "featuresHeader": {
-    "message": "Características",
+  "appearanceHeader": {
+    "message": "Dónde aparecen las imágenes",
     "description": "Encabezado para la sección de características."
   },
   "contactsIntegrationLabel": {
@@ -20,35 +20,15 @@
     "description": "Etiqueta para la casilla de verificación de la lista de la bandeja de entrada."
   },
   "inboxListDescription": {
-    "message": "Active esta opción para mostrar las fotos de perfil en la lista de mensajes de la bandeja de entrada. (solo para Thunderbird 121+)",
+    "message": "Muestra una imagen junto a cada mensaje de la lista.",
     "description": "Descripción de la función de la lista de la bandeja de entrada."
   },
-  "inboxListWarning": {
-    "message": "Advertencia: Esta característica es experimental y puede no funcionar como se espera. Si encuentras algún problema, desactiva esta opción y reporta el problema.",
+  "inboxListExperimentalNote": {
+    "message": "Esta función usa partes de Thunderbird que pueden cambiar entre versiones. Si la lista de mensajes falla, desactívala y comunica el problema.",
     "description": "Mensaje de advertencia para la característica de la lista de la bandeja de entrada."
   },
-  "inboxListKnownIssues": {
-    "message": "Problemas conocidos:",
-    "description": "Encabezado para la lista de problemas conocidos."
-  },
-  "inboxListIssueLaggyScrolling": {
-    "message": "Desplazamiento lento",
-    "description": "Problema conocido: Desplazamiento lento."
-  },
-  "inboxListIssueVisualFlickering": {
-    "message": "Parpadeo visual (marcadores de posición e iconos)",
-    "description": "Problema conocido: Parpadeo visual."
-  },
-  "inboxListIssueSlowFirstLoad": {
-    "message": "Lento durante la primera carga",
-    "description": "Problema conocido: Lento durante la primera carga."
-  },
-  "inboxListIssueBigFolders": {
-    "message": "Problemas con carpetas grandes",
-    "description": "Problema conocido: Problemas con carpetas grandes."
-  },
-  "cacheHeader": {
-    "message": "Caché",
+  "savedPicturesHeader": {
+    "message": "Imágenes guardadas",
     "description": "Encabezado para la sección de caché."
   },
   "cacheSizeLabel": {
@@ -169,5 +149,11 @@
   },
   "providerBadgeBlocked": {
     "message": "bloqueado"
+  },
+  "settingsIntro": {
+    "message": "Muestra una imagen de quienes te escriben, tomada de su ficha en la libreta de direcciones o del logotipo de su organización."
+  },
+  "testDescription": {
+    "message": "Comprueba qué imagen se obtiene para una dirección con tu configuración actual."
   }
 }

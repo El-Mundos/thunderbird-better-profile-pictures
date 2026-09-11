@@ -7,10 +7,6 @@
     "message": "Verbessern Sie Ihren Thunderbird-Posteingang mit automatischen Profilbildern, indem Sie Firmenlogos oder Avatare zu E-Mails und Kontakten hinzufügen und BIMI unterstützen",
     "description": "Beschreibung der Erweiterung."
   },
-  "featuresHeader": {
-    "message": "Funktionen",
-    "description": "Überschrift für den Funktionsbereich."
-  },
   "contactsIntegrationLabel": {
     "message": "Profilbild automatisch hinzufügen, wenn ein Kontakt gespeichert wird",
     "description": "Beschriftung für das Kontrollkästchen zur Kontaktintegration."
@@ -22,34 +18,6 @@
   "inboxListDescription": {
     "message": "Aktivieren Sie diese Option, um Profilbilder in der Posteingangsliste anzuzeigen. (nur für Thunderbird 121+)",
     "description": "Beschreibung der Funktion der Posteingangsliste."
-  },
-  "inboxListWarning": {
-    "message": "Warnung: Diese Funktion ist experimentell und funktioniert möglicherweise nicht wie erwartet. Wenn Sie Probleme feststellen, deaktivieren Sie diese Option und melden Sie das Problem.",
-    "description": "Warnmeldung für die Funktion der Posteingangsliste."
-  },
-  "inboxListKnownIssues": {
-    "message": "Bekannte Probleme:",
-    "description": "Überschrift für die Liste der bekannten Probleme."
-  },
-  "inboxListIssueLaggyScrolling": {
-    "message": "Ruckelndes Scrollen",
-    "description": "Bekanntes Problem: Ruckelndes Scrollen."
-  },
-  "inboxListIssueVisualFlickering": {
-    "message": "Visuelles Flackern (Platzhalter und Symbole)",
-    "description": "Bekanntes Problem: Visuelles Flackern."
-  },
-  "inboxListIssueSlowFirstLoad": {
-    "message": "Langsam beim ersten Laden",
-    "description": "Bekanntes Problem: Langsam beim ersten Laden."
-  },
-  "inboxListIssueBigFolders": {
-    "message": "Probleme mit großen Ordnern",
-    "description": "Bekanntes Problem: Probleme mit großen Ordnern."
-  },
-  "cacheHeader": {
-    "message": "Cache",
-    "description": "Überschrift für den Cache-Bereich."
   },
   "cacheSizeLabel": {
     "message": "Größe:",

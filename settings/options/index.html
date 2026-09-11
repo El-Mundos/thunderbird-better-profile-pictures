@@ -8,71 +8,72 @@
 </head>
 
 <body>
-  <section id="inbox">
-    <h4 data-l10n-id="featuresHeader">Features</h4>
-    <fieldset>
-      <label>
-        <input name="contactsIntegration" id="contactsIntegration" type="checkbox" role="switch" />
-        <span data-l10n-id="contactsIntegrationLabel">Auto add profile picture when saving a contact</span>
-      </label>
-    </fieldset>
-    <fieldset>
-      <label>
-        <input name="inboxList" id="inboxList" type="checkbox" role="switch" />
-        <span data-l10n-id="inboxListLabel">Enable pictures in inbox list (Experimental)</span>
-      </label>
-    </fieldset>
-    <blockquote>
-      <p data-l10n-id="inboxListDescription">Enable this option to show profile pictures in the inbox list.</p>
-      <p>
-        <span data-l10n-id="inboxListWarning">Warning : This feature is experimental and may not work as expected. If you encounter any issues, please disable this option and report the issue.</span>
-        <br />
-        <span data-l10n-id="inboxListKnownIssues">Known issues are :</span>
-        <ul>
-          <li data-l10n-id="inboxListIssueLaggyScrolling">Laggy scrolling</li>
-          <li data-l10n-id="inboxListIssueVisualFlickering">Visual flickering (placeholders and icons)</li>
-          <li data-l10n-id="inboxListIssueSlowFirstLoad">Slow during the first load</li>
-          <li data-l10n-id="inboxListIssueBigFolders">Struggles with big folders</li>
-        </ul>
-      </p>
-    </blockquote>
-  </section>
-  <section id="privacy">
-    <h4 data-l10n-id="privacyHeader">Privacy</h4>
-    <fieldset>
-      <label for="privacyMode" data-l10n-id="privacyModeLabel">Look up pictures online</label>
-      <select id="privacyMode" name="privacyMode">
-        <option value="off" data-l10n-id="privacyModeOff">Use every enabled source</option>
-        <option value="balanced" data-l10n-id="privacyModeBalanced">Only the sender's own DNS records</option>
-        <option value="strict" data-l10n-id="privacyModeStrict">Never — offline only</option>
-      </select>
-    </fieldset>
-    <blockquote>
-      <p id="privacyModeHint"></p>
-    </blockquote>
-  </section>
-  <section id="providers">
-    <h4 data-l10n-id="providersHeader">Picture sources</h4>
-    <blockquote>
-      <p data-l10n-id="providersDescription">Sources are tried from top to bottom, and the first picture found is used. Turning off sources you don't need makes lookups faster.</p>
-    </blockquote>
-    <ul id="providerList" class="provider-list"></ul>
-  </section>
-  <section id="cache">
-    <h4 data-l10n-id="cacheHeader">Cache</h4>
-    <div class="grid">
-      <div><span data-l10n-id="cacheSizeLabel">Size :</span> <span id="cacheSize"></span></div>
-      <div><button id="clearCache" data-l10n-id="clearCacheButton">Clear Cache</button></div>
-    </div>
-  </section>
-  <section id="test">
-    <h4 data-l10n-id="testHeader">Check a profile picture</h4>
-    <fieldset role="group">
-      <input name="email" type="email" placeholder="Email you want to test" autocomplete="email" id="email" required data-l10n-attr-placeholder="emailInputPlaceholder" />
-      <button id="fetchButton" data-l10n-id="fetchButtonLabel">Show</button>
-    </fieldset>
-    <article style="display:none" id="profilePicture" aria-busy="false"></article>
-  </section>
+  <main class="page">
+    <header class="page-header">
+      <h1 class="page-title" data-l10n-id="extensionName">Profile pictures</h1>
+      <p class="page-intro" data-l10n-id="settingsIntro">Show a picture for the people who write to you, taken from their address book entry or their organisation's logo.</p>
+    </header>
+
+    <section class="group" id="inbox">
+      <h2 class="group-title" data-l10n-id="appearanceHeader">Where pictures appear</h2>
+
+      <div class="setting">
+        <label class="setting-control">
+          <input name="contactsIntegration" id="contactsIntegration" type="checkbox" role="switch" />
+          <span data-l10n-id="contactsIntegrationLabel">Auto add profile picture when saving a contact</span>
+        </label>
+      </div>
+
+      <div class="setting">
+        <label class="setting-control">
+          <input name="inboxList" id="inboxList" type="checkbox" role="switch" />
+          <span data-l10n-id="inboxListLabel">Enable pictures in inbox list (Experimental)</span>
+        </label>
+        <p class="setting-help" data-l10n-id="inboxListDescription">Enable this option to show profile pictures in the inbox list.</p>
+        <p class="setting-help setting-note" data-l10n-id="inboxListExperimentalNote">This feature reaches into parts of Thunderbird that can change between releases. If the message list misbehaves, turn it off and report the problem.</p>
+      </div>
+    </section>
+
+    <section class="group" id="privacy">
+      <h2 class="group-title" data-l10n-id="privacyHeader">Privacy</h2>
+
+      <div class="setting">
+        <div class="setting-row">
+          <label class="setting-name" for="privacyMode" data-l10n-id="privacyModeLabel">Look up pictures online</label>
+          <select id="privacyMode" name="privacyMode" class="setting-input">
+            <option value="off" data-l10n-id="privacyModeOff">Use every enabled source</option>
+            <option value="balanced" data-l10n-id="privacyModeBalanced">Only the sender's own DNS records</option>
+            <option value="strict" data-l10n-id="privacyModeStrict">Never — offline only</option>
+          </select>
+        </div>
+        <p class="setting-help" id="privacyModeHint"></p>
+      </div>
+    </section>
+
+    <section class="group" id="providers">
+      <h2 class="group-title" data-l10n-id="providersHeader">Picture sources</h2>
+      <p class="group-intro" data-l10n-id="providersDescription">Sources are tried from top to bottom, and the first picture found is used. Turning off sources you don't need makes lookups faster.</p>
+      <ul id="providerList" class="provider-list"></ul>
+    </section>
+
+    <section class="group" id="cache">
+      <h2 class="group-title" data-l10n-id="savedPicturesHeader">Saved pictures</h2>
+      <div class="setting-row">
+        <span class="setting-name"><span data-l10n-id="cacheSizeLabel">Size:</span> <span id="cacheSize"></span></span>
+        <button id="clearCache" class="secondary" data-l10n-id="clearCacheButton">Clear Cache</button>
+      </div>
+    </section>
+
+    <section class="group" id="test">
+      <h2 class="group-title" data-l10n-id="testHeader">Check a profile picture</h2>
+      <p class="group-intro" data-l10n-id="testDescription">See which picture an address resolves to with your current settings.</p>
+      <fieldset role="group">
+        <input name="email" type="email" placeholder="Email you want to test" autocomplete="email" id="email" required data-l10n-attr-placeholder="emailInputPlaceholder" />
+        <button id="fetchButton" data-l10n-id="fetchButtonLabel">Show</button>
+      </fieldset>
+      <article style="display:none" id="profilePicture" aria-busy="false"></article>
+    </section>
+  </main>
   <script src="options.js" type="module"></script>
 </body>
 

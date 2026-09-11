@@ -7,10 +7,6 @@
     "message": "Améliorez Thunderbird avec des photos de profil automatiques, en ajoutant des logos d'entreprise ou des avatars aux e-mails et contacts tout en prenant en charge BIMI",
     "description": "Description de l'extension."
   },
-  "featuresHeader": {
-    "message": "Fonctionnalités",
-    "description": "En-tête de la section des fonctionnalités."
-  },
   "contactsIntegrationLabel": {
     "message": "Rajouter automatiquement une photo de profil lors de la création d'un contact",
     "description": "Libellé pour la case à cocher d'intégration des contacts."
@@ -22,34 +18,6 @@
   "inboxListDescription": {
     "message": "Activez cette option pour afficher les photos de profil dans la liste des messages de la boîte de réception. (seulement pour Thunderbird 121+)",
     "description": "Description de la fonctionnalité de la liste de la boîte de réception."
-  },
-  "inboxListWarning": {
-    "message": "Avertissement : Cette fonctionnalité est expérimentale et peut ne pas fonctionner comme prévu. Si vous rencontrez des problèmes, veuillez désactiver cette option et signaler le problème.",
-    "description": "Message d'avertissement pour la fonctionnalité de la liste de la boîte de réception."
-  },
-  "inboxListKnownIssues": {
-    "message": "Problèmes connus :",
-    "description": "En-tête de la liste des problèmes connus."
-  },
-  "inboxListIssueLaggyScrolling": {
-    "message": "Défilement saccadé",
-    "description": "Problème connu : Défilement saccadé."
-  },
-  "inboxListIssueVisualFlickering": {
-    "message": "Scintillement visuel (espaces réservés et icônes)",
-    "description": "Problème connu : Scintillement visuel."
-  },
-  "inboxListIssueSlowFirstLoad": {
-    "message": "Lent lors du premier chargement",
-    "description": "Problème connu : Lent lors du premier chargement."
-  },
-  "inboxListIssueBigFolders": {
-    "message": "Difficultés avec les grands dossiers",
-    "description": "Problème connu : Difficultés avec les grands dossiers."
-  },
-  "cacheHeader": {
-    "message": "Cache",
-    "description": "En-tête de la section du cache."
   },
   "cacheSizeLabel": {
     "message": "Taille :",
