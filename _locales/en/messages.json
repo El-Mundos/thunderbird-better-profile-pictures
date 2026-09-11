@@ -100,5 +100,61 @@
         "example": "3"
       }
     }
+  },
+  "providersHeader": {
+    "message": "Picture sources",
+    "description": "Header for the picture sources section."
+  },
+  "providersDescription": {
+    "message": "Sources are tried from top to bottom, and the first picture found is used. Turning off sources you don't need makes lookups faster.",
+    "description": "Explanation of how the provider chain works."
+  },
+  "providerBimi": {
+    "message": "BIMI (sender's own domain)",
+    "description": "Name of the BIMI provider."
+  },
+  "providerGravatar": {
+    "message": "Gravatar",
+    "description": "Name of the Gravatar provider."
+  },
+  "providerLibravatar": {
+    "message": "Libravatar",
+    "description": "Name of the Libravatar provider."
+  },
+  "providerDuckDuckGo": {
+    "message": "DuckDuckGo",
+    "description": "Name of the DuckDuckGo provider."
+  },
+  "providerGoogle": {
+    "message": "Google",
+    "description": "Name of the Google provider."
+  },
+  "providerIconHorse": {
+    "message": "Icon Horse",
+    "description": "Name of the Icon Horse provider."
+  },
+  "providerSplitbee": {
+    "message": "Splitbee",
+    "description": "Name of the Splitbee provider."
+  },
+  "providerFaviconWebpage": {
+    "message": "Website icon (sender's own site)",
+    "description": "Name of the favicon scraping provider."
+  },
+  "providerBadgeThirdParty": {
+    "message": "third party",
+    "description": "Badge marking a provider that discloses the correspondent to an outside service."
+  },
+  "providerBadgeSlow": {
+    "message": "slow",
+    "description": "Badge marking a provider whose lookups are expensive."
+  },
+  "providerMoveUp": {
+    "message": "Move up",
+    "description": "Tooltip for the reorder-up button."
+  },
+  "providerMoveDown": {
+    "message": "Move down",
+    "description": "Tooltip for the reorder-down button."
   }
 }
