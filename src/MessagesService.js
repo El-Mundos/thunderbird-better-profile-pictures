@@ -11,6 +11,9 @@ class MessagesService {
     this.avatarService = avatarService;
     this.WAIT_TIME_MS = defaultSettings.WAIT_TIME_MS;
     this.SUBBATCH_SIZE = defaultSettings.SUBBATCH_SIZE;
+    // Absolute ceiling on how many rows the inbox-list decoration will walk in
+    // a single pass. Hard backstop against runaway full-folder scans.
+    this.MAX_INBOX_MESSAGES = 300;
     /**
      * Timestamp of the last display inbox list call.
      */
@@ -215,6 +218,10 @@ class MessagesService {
     if (processId !== this.processId) {
       return;
     }
+    // Hard backstop: never walk past the ceiling in a single pass.
+    if (messagesOffset >= this.MAX_INBOX_MESSAGES) {
+      return;
+    }
     const hasNextMessages = (currentMessages) =>
       currentMessages.id !== null && currentMessages.id !== undefined;
 
@@ -223,10 +230,15 @@ class MessagesService {
       maxMessages,
       messagesOffset,
     ) => {
+      // Clamp so a huge firstDisplayedMessageId can't paginate the whole folder.
+      const cappedMax = Math.min(
+        maxMessages,
+        messagesOffset + this.MAX_INBOX_MESSAGES,
+      );
       let allMessages = [];
       while (
         hasNextMessages(currentMessages) &&
-        allMessages.length + messagesOffset < maxMessages
+        allMessages.length + messagesOffset < cappedMax
       ) {
         if (processId !== this.processId) {
           return { messages: [], id: null };
@@ -311,7 +323,14 @@ class MessagesService {
         ? firstDisplayedMessageId
         : 0;
       const processedCount = messagesOffset + currentMessages.messages.length;
-      if (processedCount > firstVisible + VISIBLE_BUFFER) {
+      // Absolute safety cap: never decorate more than this many rows in a
+      // single pass, no matter what the visible-area math says. This is the
+      // backstop that prevents scanning huge folders.
+      const MAX_PROCESSED_MESSAGES = 250;
+      if (
+        processedCount > firstVisible + VISIBLE_BUFFER ||
+        processedCount >= MAX_PROCESSED_MESSAGES
+      ) {
         await this.installDOMlistener(tabId);
         return;
       }
