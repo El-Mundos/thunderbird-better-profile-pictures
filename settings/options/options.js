@@ -1,3 +1,4 @@
+import { getProviderDescriptor } from "../../providers/registry.js";
 import Author from "../../src/Author.js";
 import CacheStorage from "../../src/CacheStorage.js";
 import ProfilePictureFetcher from "../../src/ProfilePictureFetcher.js";
@@ -9,6 +10,7 @@ const inboxListCheckbox = document.getElementById("inboxList");
 const contactsIntegrationCheckbox = document.getElementById(
   "contactsIntegration",
 );
+const providerListElement = document.getElementById("providerList");
 const emailInput = document.getElementById("email");
 const fetchButton = document.getElementById("fetchButton");
 const profilePictureDiv = document.getElementById("profilePicture");
@@ -129,6 +131,132 @@ function renderImagePreview(url) {
   profilePictureDiv.appendChild(img);
 }
 
+/**
+ * Provider chain as shown in the UI. Held in memory so reordering doesn't need
+ * a storage round-trip per click; persisted on every change.
+ * @type {Array<{id: string, enabled: boolean}>}
+ */
+let providerState = [];
+
+/**
+ * Persists the current chain and tells the background to pick it up.
+ */
+async function persistProviders() {
+  await settingsManager.setProviders(providerState);
+  browser.runtime.sendMessage({ action: "refreshSettings" });
+}
+
+/**
+ * Builds a small descriptive badge (third-party, slow).
+ * @param {string} messageKey - _locales key for the badge text.
+ * @param {string} className - Modifier class for styling.
+ * @returns {HTMLElement}
+ */
+function buildProviderBadge(messageKey, className) {
+  const badge = document.createElement("span");
+  badge.className = `provider-badge ${className}`;
+  badge.textContent = browser.i18n.getMessage(messageKey);
+  return badge;
+}
+
+/**
+ * Moves a provider within the chain and re-renders.
+ * @param {number} index - Current position.
+ * @param {number} delta - -1 to move up, +1 to move down.
+ */
+async function moveProvider(index, delta) {
+  const target = index + delta;
+  if (target < 0 || target >= providerState.length) {
+    return;
+  }
+  const [entry] = providerState.splice(index, 1);
+  providerState.splice(target, 0, entry);
+  renderProviders();
+  await persistProviders();
+}
+
+/**
+ * Builds one row: enable switch, name, badges, and reorder controls.
+ * @param {{id: string, enabled: boolean}} entry
+ * @param {number} index - Position in the chain.
+ * @returns {HTMLElement|null} The row, or null for an unknown provider.
+ */
+function buildProviderRow(entry, index) {
+  const descriptor = getProviderDescriptor(entry.id);
+  if (!descriptor) {
+    return null;
+  }
+
+  const row = document.createElement("li");
+  row.className = "provider-row";
+
+  const label = document.createElement("label");
+  label.className = "provider-label";
+
+  const checkbox = document.createElement("input");
+  checkbox.type = "checkbox";
+  checkbox.setAttribute("role", "switch");
+  checkbox.checked = entry.enabled;
+  checkbox.addEventListener("change", async () => {
+    providerState[index].enabled = checkbox.checked;
+    await persistProviders();
+  });
+
+  const name = document.createElement("span");
+  name.textContent =
+    browser.i18n.getMessage(descriptor.labelKey) || descriptor.id;
+
+  label.append(checkbox, name);
+  if (descriptor.thirdParty) {
+    label.append(
+      buildProviderBadge("providerBadgeThirdParty", "is-third-party"),
+    );
+  }
+  if (descriptor.slow) {
+    label.append(buildProviderBadge("providerBadgeSlow", "is-slow"));
+  }
+
+  const controls = document.createElement("div");
+  controls.className = "provider-controls";
+  for (const [delta, glyph, titleKey] of [
+    [-1, "\u25B2", "providerMoveUp"],
+    [1, "\u25BC", "providerMoveDown"],
+  ]) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "provider-move";
+    button.textContent = glyph;
+    button.title = browser.i18n.getMessage(titleKey);
+    button.setAttribute("aria-label", button.title);
+    button.disabled =
+      delta === -1 ? index === 0 : index === providerState.length - 1;
+    button.addEventListener("click", () => moveProvider(index, delta));
+    controls.append(button);
+  }
+
+  row.append(label, controls);
+  return row;
+}
+
+/**
+ * Re-renders the whole chain. The list is eight rows, so rebuilding it wholesale
+ * is cheaper to reason about than patching rows in place.
+ */
+function renderProviders() {
+  providerListElement.textContent = "";
+  providerState.forEach((entry, index) => {
+    const row = buildProviderRow(entry, index);
+    if (row) {
+      providerListElement.append(row);
+    }
+  });
+}
+
+async function initProviders() {
+  providerState = await settingsManager.getProviders();
+  renderProviders();
+}
+
 async function printCacheSize(domElement) {
   const detailedSize = await cache.formattedSize();
   const iconsCount = detailedSize.iconsCount;
@@ -247,6 +375,7 @@ function setupLocalization() {
  */
 async function initialize() {
   await printCacheSize(cacheSizeElement);
+  await initProviders();
   initOptions();
   clearCacheButton.addEventListener("click", clearCache);
   inboxListCheckbox.addEventListener("change", setInboxList);

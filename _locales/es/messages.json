@@ -100,5 +100,47 @@
         "example": "3"
       }
     }
+  },
+  "providersHeader": {
+    "message": "Fuentes de imágenes"
+  },
+  "providersDescription": {
+    "message": "Las fuentes se prueban de arriba abajo y se usa la primera imagen encontrada. Desactivar las que no necesites acelera las búsquedas."
+  },
+  "providerBimi": {
+    "message": "BIMI (dominio del remitente)"
+  },
+  "providerGravatar": {
+    "message": "Gravatar"
+  },
+  "providerLibravatar": {
+    "message": "Libravatar"
+  },
+  "providerDuckDuckGo": {
+    "message": "DuckDuckGo"
+  },
+  "providerGoogle": {
+    "message": "Google"
+  },
+  "providerIconHorse": {
+    "message": "Icon Horse"
+  },
+  "providerSplitbee": {
+    "message": "Splitbee"
+  },
+  "providerFaviconWebpage": {
+    "message": "Icono del sitio web (sitio del remitente)"
+  },
+  "providerBadgeThirdParty": {
+    "message": "terceros"
+  },
+  "providerBadgeSlow": {
+    "message": "lento"
+  },
+  "providerMoveUp": {
+    "message": "Subir"
+  },
+  "providerMoveDown": {
+    "message": "Bajar"
   }
 }
