@@ -1530,6 +1530,88 @@ var headerApi = class extends ExtensionCommon.ExtensionAPI {
         },
 
         /**
+         * Viewport-only: returns the messages for the rows that are currently
+         * rendered on screen, read directly from the message view (random
+         * access, no folder pagination). Skips grouped/dummy header rows.
+         *
+         * @param {number} tabId - The tab ID.
+         * @returns {Array<{index:number, message:Object}>}
+         */
+        async getVisibleRowMessages(tabId) {
+          const { nativeTab } = context.extension.tabManager.get(tabId);
+          const window = getContentWindow(nativeTab);
+          const threadTree = window?.threadTree;
+          if (!threadTree || !threadTree._view || !threadTree._rows) {
+            return [];
+          }
+          const view = threadTree._view;
+          const MSG_VIEW_FLAG_DUMMY = 0x20000000;
+          const result = [];
+          for (const key of threadTree._rows.keys()) {
+            const index = typeof key === "number" ? key : parseInt(key, 10);
+            if (!Number.isInteger(index)) {
+              continue;
+            }
+            try {
+              if (
+                view.getFlagsAt &&
+                view.getFlagsAt(index) & MSG_VIEW_FLAG_DUMMY
+              ) {
+                // Grouped-by-sort header row, not a real message.
+                continue;
+              }
+              const hdr = view.getMsgHdrAt ? view.getMsgHdrAt(index) : null;
+              if (!hdr) {
+                continue;
+              }
+              let message;
+              try {
+                message = context.extension.messageManager.convert(hdr);
+              } catch (_e) {
+                message = { author: hdr.author || "", recipients: [] };
+              }
+              result.push({ index, message });
+            } catch (_e) {
+              // Skip any row we can't resolve.
+            }
+          }
+          return result;
+        },
+
+        /**
+         * Viewport-only: paints avatars onto the currently rendered rows,
+         * keyed by their view index. Bounded to the number of visible rows.
+         *
+         * @param {number} tabId - The tab ID.
+         * @param {string} urlsJSON - JSON map of { rowIndex: urlOrInitialsObj }.
+         * @returns {Object} - Status object.
+         */
+        async paintRowAvatars(tabId, urlsJSON) {
+          const urls = JSON.parse(urlsJSON);
+          const { nativeTab } = context.extension.tabManager.get(tabId);
+          const window = getContentWindow(nativeTab);
+          const threadTree = window?.threadTree;
+          if (!threadTree || !threadTree._rows) {
+            return { status: "failed" };
+          }
+          installCss(window);
+
+          for (const [indexStr, url] of Object.entries(urls)) {
+            const index = parseInt(indexStr, 10);
+            const row = threadTree._rows.get(index);
+            if (!row) {
+              continue;
+            }
+            try {
+              await installOnRow(window.document, url, row, false);
+            } catch (e) {
+              console.error("paintRowAvatars error", e);
+            }
+          }
+          return { status: "success" };
+        },
+
+        /**
          * Installs event listeners on the inbox list.
          *
          * @param {number} tabId - The tab ID.
