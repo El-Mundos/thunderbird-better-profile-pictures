@@ -135,6 +135,9 @@ function initListeners() {
       displayInboxList();
     } else if (message.action === "refreshSettings") {
       refreshSettings();
+      // Invalidated here rather than inside refreshSettings(): that also runs
+      // at startup, before avatarService is constructed.
+      avatarService.invalidateSettings();
     }
   });
 

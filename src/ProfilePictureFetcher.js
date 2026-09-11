@@ -1,5 +1,9 @@
 import defaultSettings from "../settings/defaultSettings.js";
 import ProviderFactory from "../providers/ProviderFactory.js";
+import {
+  getProviderDescriptor,
+  reconcileProviderList,
+} from "../providers/registry.js";
 import Author from "./Author.js";
 import CacheStorage from "./CacheStorage.js";
 import { AvatarStrategy } from "./strategies/AvatarStrategy.js";
@@ -21,21 +25,78 @@ export default class ProfilePictureFetcher {
     authorObject,
     providerName = "duckduckgo",
     disableCache = false,
+    providerList = null,
   ) {
     this.wdow = wdow;
     this.author = authorObject;
-    this.provider = ProviderFactory.createProvider(providerName, wdow);
-    this.gravatarProvider = ProviderFactory.createProvider("gravatar", wdow);
-    this.libravatarProvider = ProviderFactory.createProvider(
-      "libravatar",
-      wdow,
-    );
-    this.bimiProvider = ProviderFactory.createProvider("bimi", wdow);
-    this.webProvider = ProviderFactory.createProvider("favicon_webpage", wdow);
     this.providerName = providerName;
     this.domain = authorObject.getDomain();
     this.cache = new CacheStorage();
     this.disableCache = disableCache;
+    // Resolved provider chain, in lookup order. Reconciled against the registry
+    // so a stored list from an older release can't reference a provider that no
+    // longer exists.
+    this.providerList = reconcileProviderList(
+      providerList ?? defaultSettings.providers,
+    );
+    // Providers are constructed lazily: building all eight up front meant
+    // instantiating scrapers that the configured chain never consults.
+    this.providerInstances = new Map();
+  }
+
+  /**
+   * Returns the provider instance for an id, constructing it on first use.
+   * @param {string} id - Provider id from the registry.
+   * @returns {Provider|null} The provider, or null if it cannot be built.
+   */
+  getProvider(id) {
+    if (!this.providerInstances.has(id)) {
+      try {
+        this.providerInstances.set(
+          id,
+          ProviderFactory.createProvider(id, this.wdow),
+        );
+      } catch (error) {
+        console.error(`Unknown avatar provider \"${id}\"`, error);
+        this.providerInstances.set(id, null);
+      }
+    }
+    return this.providerInstances.get(id);
+  }
+
+  /**
+   * Builds the online lookup steps for the enabled providers, in order.
+   *
+   * Domain providers get a second attempt against the subdomain-stripped
+   * author, since mail from a subdomain usually wants the parent company's
+   * logo. Email providers identify one person, so stripping the subdomain
+   * would change who is being looked up and is skipped.
+   *
+   * @param {"email"|"domain"|null} kindFilter - Restrict to one provider kind.
+   * @returns {Array<AvatarStrategy>} Ordered online strategies.
+   */
+  buildOnlineStrategies(kindFilter = null) {
+    const strategies = [];
+    for (const entry of this.providerList) {
+      if (!entry.enabled) {
+        continue;
+      }
+      const descriptor = getProviderDescriptor(entry.id);
+      if (!descriptor || (kindFilter && descriptor.kind !== kindFilter)) {
+        continue;
+      }
+      const provider = this.getProvider(entry.id);
+      if (!provider) {
+        continue;
+      }
+      strategies.push(new OnlineStrategy(this, provider, this.author));
+      if (descriptor.kind === "domain" && this.author.hasSubDomain()) {
+        strategies.push(
+          new OnlineStrategy(this, provider, this.author.removeSubDomain()),
+        );
+      }
+    }
+    return strategies;
   }
 
   /**
@@ -207,26 +268,17 @@ export default class ProfilePictureFetcher {
    */
   async getDomainAvatar() {
     const topDomain = this.author.getTopDomain();
+    // Every local lookup runs before any network one. The subdomain cache probe
+    // used to sit between two online attempts, which meant a cache hit could be
+    // reached only after a request had already gone out.
     const strategies = [
       new ContactsStrategy(this, this.author),
       new CacheStrategy(this, this.author.getEmail()),
       new CacheStrategy(this, this.domain),
-      new OnlineStrategy(this, this.bimiProvider, this.author), // company first
       this.author.hasSubDomain()
         ? new CacheStrategy(this, topDomain)
         : new VoidStrategy(),
-      this.author.hasSubDomain()
-        ? new OnlineStrategy(
-            this,
-            this.bimiProvider,
-            this.author.removeSubDomain(),
-          )
-        : new VoidStrategy(),
-      new OnlineStrategy(this, this.gravatarProvider, this.author),
-      new OnlineStrategy(this, this.provider, this.author),
-      this.author.hasSubDomain()
-        ? new OnlineStrategy(this, this.provider, this.author.removeSubDomain())
-        : new VoidStrategy(),
+      ...this.buildOnlineStrategies(),
     ];
     return await this.executeStrategies(strategies);
   }
@@ -236,10 +288,12 @@ export default class ProfilePictureFetcher {
    * @returns {Blob|string} Blob of the avatar or "notFound" if not found
    */
   async getPublicAvatar() {
+    // Email providers only: a domain lookup against a public mail host returns
+    // that host's own logo for every correspondent using it.
     const strategies = [
       new ContactsStrategy(this, this.author),
       new CacheStrategy(this, this.author.getEmail()),
-      new OnlineStrategy(this, this.gravatarProvider, this.author),
+      ...this.buildOnlineStrategies("email"),
     ];
     return await this.executeStrategies(strategies);
   }

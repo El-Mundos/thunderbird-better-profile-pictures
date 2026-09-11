@@ -1,3 +1,4 @@
+import { reconcileProviderList } from "../providers/registry.js";
 import defaultSettings from "./defaultSettings.js";
 
 class SettingsManager {
@@ -32,6 +33,19 @@ class SettingsManager {
 
   async setContactsIntegrationEnabled(value) {
     await this.setSetting("contactsIntegrationEnabled", value);
+  }
+
+  /**
+   * Returns the provider lookup chain, reconciled against the registry so a
+   * list stored by an older release stays usable.
+   * @returns {Promise<Array<{id: string, enabled: boolean}>>}
+   */
+  async getProviders() {
+    return reconcileProviderList(await this.getSetting("providers"));
+  }
+
+  async setProviders(value) {
+    await this.setSetting("providers", reconcileProviderList(value));
   }
 }
 

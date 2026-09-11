@@ -1,5 +1,7 @@
+import SettingsManager from "../settings/SettingsManager.js";
 import defaultSettings from "../settings/defaultSettings.js";
 import Author from "./Author.js";
+import CacheStorage from "./CacheStorage.js";
 import ProfilePictureFetcher from "./ProfilePictureFetcher.js";
 
 const MAX_CACHE_SIZE = 500;
@@ -20,6 +22,45 @@ export default class AvatarService {
      * @type {Map<string, Promise<string|null>>}
      */
     this.pendingPromises = new Map();
+    this.settingsManager = new SettingsManager(new CacheStorage());
+    /**
+     * Provider chain, read once and reused. Every avatar lookup needs it, and
+     * re-reading it per row would put a storage round-trip on the hot path.
+     * Invalidated by refreshSettings when the options page changes it.
+     * @type {Array<{id: string, enabled: boolean}>|null}
+     */
+    this.providerList = null;
+  }
+
+  /**
+   * Returns the provider chain, loading it on first use.
+   * @returns {Promise<Array<{id: string, enabled: boolean}>>}
+   */
+  async getProviderList() {
+    if (this.providerList === null) {
+      try {
+        this.providerList = await this.settingsManager.getProviders();
+      } catch (error) {
+        console.error("Error loading provider settings, using defaults", error);
+        this.providerList = defaultSettings.providers;
+      }
+    }
+    return this.providerList;
+  }
+
+  /**
+   * Drops the cached provider chain so the next lookup re-reads it, and clears
+   * resolved avatars: a chain change can produce a different picture for a
+   * correspondent already resolved under the old order.
+   *
+   * Fetches already in flight were started under the old chain. They are
+   * forgotten too, so the next lookup starts afresh, and getAvatar does not
+   * cache what they return.
+   */
+  invalidateSettings() {
+    this.providerList = null;
+    this.sessionCacheAvatarUrls.clear();
+    this.pendingPromises.clear();
   }
 
   /**
@@ -61,9 +102,25 @@ export default class AvatarService {
       return null;
     }
 
-    const promise = new ProfilePictureFetcher(window, author)
-      .getAvatar()
+    // The settings read happens inside the shared Promise: awaiting it before
+    // registering the Promise would let concurrent callers for the same
+    // author each start their own fetch.
+    const promise = (async () => {
+      const providerList = await this.getProviderList();
+      return new ProfilePictureFetcher(
+        window,
+        author,
+        "duckduckgo",
+        false,
+        providerList,
+      ).getAvatar();
+    })()
       .then((result) => {
+        // Settings changed while this was in flight: callers already waiting
+        // get the result, but it is not cached under the new settings.
+        if (this.pendingPromises.get(lcAuthor) !== promise) {
+          return result;
+        }
         // FIFO eviction: drop oldest entry when cache is full.
         if (this.sessionCacheAvatarUrls.size >= MAX_CACHE_SIZE) {
           const firstKey = this.sessionCacheAvatarUrls.keys().next().value;
@@ -73,7 +130,9 @@ export default class AvatarService {
         return result;
       })
       .finally(() => {
-        this.pendingPromises.delete(lcAuthor);
+        if (this.pendingPromises.get(lcAuthor) === promise) {
+          this.pendingPromises.delete(lcAuthor);
+        }
       });
 
     this.pendingPromises.set(lcAuthor, promise);
