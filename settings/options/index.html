@@ -62,6 +62,33 @@
         <span class="setting-name"><span data-l10n-id="cacheSizeLabel">Size:</span> <span id="cacheSize"></span></span>
         <button id="clearCache" class="secondary" data-l10n-id="clearCacheButton">Clear Cache</button>
       </div>
+
+      <div class="setting">
+        <div class="setting-row">
+          <label class="setting-name" for="cacheRefreshFound" data-l10n-id="cacheRefreshFoundLabel">Look up a saved picture again after</label>
+          <select id="cacheRefreshFound" name="cacheRefreshFound" class="setting-input">
+            <option value="7" data-l10n-id="cacheInterval7Days">7 days</option>
+            <option value="14" data-l10n-id="cacheInterval14Days">14 days</option>
+            <option value="30" data-l10n-id="cacheInterval30Days">30 days</option>
+            <option value="90" data-l10n-id="cacheInterval90Days">90 days</option>
+            <option value="0" data-l10n-id="cacheIntervalNever">Never</option>
+          </select>
+        </div>
+        <p class="setting-help" data-l10n-id="cacheRefreshFoundHelp">Picks up logo changes and newly published BIMI records. Longer means fewer lookups.</p>
+      </div>
+
+      <div class="setting">
+        <div class="setting-row">
+          <label class="setting-name" for="cacheRefreshNotFound" data-l10n-id="cacheRefreshNotFoundLabel">Retry addresses with no picture after</label>
+          <select id="cacheRefreshNotFound" name="cacheRefreshNotFound" class="setting-input">
+            <option value="1" data-l10n-id="cacheInterval1Day">1 day</option>
+            <option value="7" data-l10n-id="cacheInterval7Days">7 days</option>
+            <option value="30" data-l10n-id="cacheInterval30Days">30 days</option>
+            <option value="0" data-l10n-id="cacheIntervalNever">Never</option>
+          </select>
+        </div>
+        <p class="setting-help" data-l10n-id="cacheRefreshNotFoundHelp">Most addresses that have no picture never get one, so retrying often costs requests without finding anything.</p>
+      </div>
     </section>
 
     <section class="group" id="test">

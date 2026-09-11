@@ -66,6 +66,25 @@ class SettingsManager {
   async setPrivacyMode(value) {
     await this.setSetting("privacyMode", value);
   }
+
+  /**
+   * Returns how long saved pictures and "no picture" results stay valid.
+   * @returns {Promise<{foundDays: number, notFoundDays: number}>}
+   */
+  async getCacheRefreshDays() {
+    return {
+      foundDays: await this.getSetting("cacheRefreshFoundDays"),
+      notFoundDays: await this.getSetting("cacheRefreshNotFoundDays"),
+    };
+  }
+
+  async setCacheRefreshFoundDays(value) {
+    await this.setSetting("cacheRefreshFoundDays", value);
+  }
+
+  async setCacheRefreshNotFoundDays(value) {
+    await this.setSetting("cacheRefreshNotFoundDays", value);
+  }
 }
 
 export default SettingsManager;

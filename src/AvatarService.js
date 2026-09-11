@@ -2,7 +2,7 @@ import SettingsManager from "../settings/SettingsManager.js";
 import defaultSettings from "../settings/defaultSettings.js";
 import Author from "./Author.js";
 import CacheStorage from "./CacheStorage.js";
-import ProfilePictureFetcher from "./ProfilePictureFetcher.js";
+import ProfilePictureFetcher, { daysToMs } from "./ProfilePictureFetcher.js";
 
 const MAX_CACHE_SIZE = 500;
 
@@ -35,6 +35,11 @@ export default class AvatarService {
      * @type {string|null}
      */
     this.privacyMode = null;
+    /**
+     * Cache lifetimes in milliseconds, resolved from the day-based settings.
+     * @type {{refreshFoundMs: number, refreshNotFoundMs: number}|null}
+     */
+    this.cacheRefresh = null;
   }
 
   /**
@@ -61,6 +66,31 @@ export default class AvatarService {
    * like the add-on being broken, with no way for the user to tell why.
    * @returns {Promise<string>} A PrivacyMode value.
    */
+  /**
+   * Returns the cache lifetimes, loading them on first use.
+   * @returns {Promise<{refreshFoundMs: number, refreshNotFoundMs: number}>}
+   */
+  async getCacheRefresh() {
+    if (this.cacheRefresh === null) {
+      let days;
+      try {
+        days = await this.settingsManager.getCacheRefreshDays();
+      } catch (error) {
+        console.error("Error loading cache settings, using defaults", error);
+        days = {
+          foundDays: defaultSettings.cacheRefreshFoundDays,
+          notFoundDays: defaultSettings.cacheRefreshNotFoundDays,
+        };
+      }
+      // Keys match the fetcher's options contract so this can be spread into it.
+      this.cacheRefresh = {
+        refreshFoundMs: daysToMs(days.foundDays),
+        refreshNotFoundMs: daysToMs(days.notFoundDays),
+      };
+    }
+    return this.cacheRefresh;
+  }
+
   async getPrivacyMode() {
     if (this.privacyMode === null) {
       try {
@@ -85,6 +115,7 @@ export default class AvatarService {
   invalidateSettings() {
     this.providerList = null;
     this.privacyMode = null;
+    this.cacheRefresh = null;
     this.sessionCacheAvatarUrls.clear();
     this.pendingPromises.clear();
   }
@@ -132,15 +163,16 @@ export default class AvatarService {
     // registering the Promise would let concurrent callers for the same
     // author each start their own fetch.
     const promise = (async () => {
-      const providerList = await this.getProviderList();
-      const privacyMode = await this.getPrivacyMode();
       return new ProfilePictureFetcher(
         window,
         author,
         "duckduckgo",
         false,
-        providerList,
-        privacyMode,
+        {
+          providers: await this.getProviderList(),
+          privacyMode: await this.getPrivacyMode(),
+          ...(await this.getCacheRefresh()),
+        },
       ).getAvatar();
     })()
       .then((result) => {
