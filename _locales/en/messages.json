@@ -178,5 +178,35 @@
   },
   "testDescription": {
     "message": "See which picture an address resolves to with your current settings."
+  },
+  "cacheRefreshFoundLabel": {
+    "message": "Look up a saved picture again after"
+  },
+  "cacheRefreshFoundHelp": {
+    "message": "Picks up logo changes and newly published BIMI records. Longer means fewer lookups."
+  },
+  "cacheRefreshNotFoundLabel": {
+    "message": "Retry addresses with no picture after"
+  },
+  "cacheRefreshNotFoundHelp": {
+    "message": "Most addresses that have no picture never get one, so retrying often costs requests without finding anything."
+  },
+  "cacheInterval1Day": {
+    "message": "1 day"
+  },
+  "cacheInterval7Days": {
+    "message": "7 days"
+  },
+  "cacheInterval14Days": {
+    "message": "14 days"
+  },
+  "cacheInterval30Days": {
+    "message": "30 days"
+  },
+  "cacheInterval90Days": {
+    "message": "90 days"
+  },
+  "cacheIntervalNever": {
+    "message": "Never"
   }
 }

@@ -155,5 +155,35 @@
   },
   "testDescription": {
     "message": "Comprueba qué imagen se obtiene para una dirección con tu configuración actual."
+  },
+  "cacheRefreshFoundLabel": {
+    "message": "Volver a buscar una imagen guardada después de"
+  },
+  "cacheRefreshFoundHelp": {
+    "message": "Detecta cambios de logotipo y registros BIMI nuevos. Cuanto más largo, menos búsquedas."
+  },
+  "cacheRefreshNotFoundLabel": {
+    "message": "Reintentar direcciones sin imagen después de"
+  },
+  "cacheRefreshNotFoundHelp": {
+    "message": "La mayoría de direcciones sin imagen nunca llegan a tener una, así que reintentar a menudo gasta peticiones sin encontrar nada."
+  },
+  "cacheInterval1Day": {
+    "message": "1 día"
+  },
+  "cacheInterval7Days": {
+    "message": "7 días"
+  },
+  "cacheInterval14Days": {
+    "message": "14 días"
+  },
+  "cacheInterval30Days": {
+    "message": "30 días"
+  },
+  "cacheInterval90Days": {
+    "message": "90 días"
+  },
+  "cacheIntervalNever": {
+    "message": "Nunca"
   }
 }

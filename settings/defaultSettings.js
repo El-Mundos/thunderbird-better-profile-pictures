@@ -4,8 +4,8 @@
  * @property {boolean} inboxListEnabled - Whether the inbox list feature is enabled. MUTABLE.
  * @property {boolean} contactsIntegrationEnabled - Whether the contacts integration feature is enabled. MUTABLE.
  * @property {Array<string>} publicMails - List of public mail domains.
- * @property {number} notFoundRefreshIntervalMs - Interval in milliseconds to refresh not found avatars.
- * @property {number} foundRefreshIntervalMs - Interval after which a cached icon is re-fetched, so newly-added BIMI records / logo changes are picked up.
+ * @property {number} cacheRefreshNotFoundDays - Days before a "no picture" result is retried. 0 never retries.
+ * @property {number} cacheRefreshFoundDays - Days before a saved picture is looked up again, so new BIMI records and logo changes are picked up. 0 keeps it indefinitely.
  * @property {number} WAIT_TIME_MS - Wait time in milliseconds for displaying the inbox list.
  * @property {number} SUBBATCH_SIZE - Size of the subbatch for processing messages.
  * @property {Array<{id: string, enabled: boolean}>} providers - Avatar providers in lookup order. MUTABLE.
@@ -34,8 +34,15 @@ const defaultSettings = {
     "msn",
     "yandex",
   ],
-  notFoundRefreshIntervalMs: 1000 * 3600 * 24 * 1,
-  foundRefreshIntervalMs: 1000 * 3600 * 24 * 14,
+  // Expressed in days because that is the unit the settings UI offers and the
+  // one a user reasons in. 0 means "never expire" for both.
+  //
+  // The not-found retry was briefly 1 day, which is a 30x increase in requests
+  // to the picture sources for domains that will never resolve. A week keeps
+  // newly-published BIMI records appearing promptly without that cost, and a
+  // user who wants it sooner can now say so.
+  cacheRefreshNotFoundDays: 7,
+  cacheRefreshFoundDays: 14,
   WAIT_TIME_MS: 200,
   SUBBATCH_SIZE: 15,
   MAX_REQUEST_SIZE: 100,

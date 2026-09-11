@@ -14,6 +14,33 @@ import { ContactsStrategy } from "./strategies/ContactsStrategy.js";
 import { OnlineStrategy } from "./strategies/OnlineStrategy.js";
 import { VoidStrategy } from "./strategies/VoidStrategy.js";
 
+/**
+ * Converts a day count from settings into milliseconds.
+ * @param {number} days - Whole days; 0 means "never expire".
+ * @returns {number} Milliseconds, or 0 for never.
+ */
+export function daysToMs(days) {
+  return Number.isFinite(days) && days > 0 ? days * 24 * 3600 * 1000 : 0;
+}
+
+/**
+ * Whether a cache entry has aged past its interval.
+ *
+ * An entry written before timestamps existed has no ts and counts as expired,
+ * which is what re-resolves the pre-upgrade cache once. An interval of 0 means
+ * the entry never expires, so an absent timestamp does not matter there.
+ *
+ * @param {number|undefined} ts - When the entry was written.
+ * @param {number} intervalMs - Lifetime in milliseconds, or 0 for never.
+ * @returns {boolean}
+ */
+export function isExpired(ts, intervalMs) {
+  if (intervalMs <= 0) {
+    return false;
+  }
+  return Date.now() - (ts || 0) > intervalMs;
+}
+
 export default class ProfilePictureFetcher {
   /**
    *
@@ -27,9 +54,14 @@ export default class ProfilePictureFetcher {
     authorObject,
     providerName = "duckduckgo",
     disableCache = false,
-    providerList = null,
-    privacyMode = PrivacyMode.OFF,
+    options = {},
   ) {
+    const {
+      providers = null,
+      privacyMode = PrivacyMode.OFF,
+      refreshFoundMs = daysToMs(defaultSettings.cacheRefreshFoundDays),
+      refreshNotFoundMs = daysToMs(defaultSettings.cacheRefreshNotFoundDays),
+    } = options;
     this.wdow = wdow;
     this.author = authorObject;
     this.providerName = providerName;
@@ -44,9 +76,11 @@ export default class ProfilePictureFetcher {
     // directly.
     this.privacyMode = privacyMode;
     this.providerList = filterProvidersForPrivacy(
-      reconcileProviderList(providerList ?? defaultSettings.providers),
+      reconcileProviderList(providers ?? defaultSettings.providers),
       privacyMode,
     );
+    this.refreshFoundMs = refreshFoundMs;
+    this.refreshNotFoundMs = refreshNotFoundMs;
     // Providers are constructed lazily: building all eight up front meant
     // instantiating scrapers that the configured chain never consults.
     this.providerInstances = new Map();
@@ -230,8 +264,7 @@ export default class ProfilePictureFetcher {
       if (fileInfos.type === "notFound") {
         // Enforce the not-found TTL so dead lookups eventually retry instead of
         // being cached forever. Treat an expired marker as a cache miss.
-        const age = Date.now() - (fileInfos.ts || 0);
-        if (age > defaultSettings.notFoundRefreshIntervalMs) {
+        if (isExpired(fileInfos.ts, this.refreshNotFoundMs)) {
           this.cache.removeProperty(key);
           return false;
         }
@@ -240,8 +273,7 @@ export default class ProfilePictureFetcher {
       // Refresh stale icons so newly-added BIMI records or updated logos get
       // picked up. Treat an expired icon as a cache miss so the strategy chain
       // re-resolves it (BIMI is tried first).
-      const iconAge = Date.now() - (fileInfos.ts || 0);
-      if (iconAge > defaultSettings.foundRefreshIntervalMs) {
+      if (isExpired(fileInfos.ts, this.refreshFoundMs)) {
         this.cache.removeProperty(key);
         return false;
       }

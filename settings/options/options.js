@@ -17,6 +17,8 @@ const contactsIntegrationCheckbox = document.getElementById(
 );
 const providerListElement = document.getElementById("providerList");
 const privacyModeSelect = document.getElementById("privacyMode");
+const cacheFoundSelect = document.getElementById("cacheRefreshFound");
+const cacheNotFoundSelect = document.getElementById("cacheRefreshNotFound");
 const privacyModeHint = document.getElementById("privacyModeHint");
 const emailInput = document.getElementById("email");
 const fetchButton = document.getElementById("fetchButton");
@@ -323,6 +325,26 @@ async function printCacheSize(domElement) {
   domElement.textContent = size + iconsText;
 }
 
+async function initCacheRefresh() {
+  const { foundDays, notFoundDays } = await settingsManager.getCacheRefreshDays();
+  cacheFoundSelect.value = String(foundDays);
+  cacheNotFoundSelect.value = String(notFoundDays);
+}
+
+async function setCacheRefreshFound() {
+  await settingsManager.setCacheRefreshFoundDays(
+    Number(cacheFoundSelect.value),
+  );
+  browser.runtime.sendMessage({ action: "refreshSettings" });
+}
+
+async function setCacheRefreshNotFound() {
+  await settingsManager.setCacheRefreshNotFoundDays(
+    Number(cacheNotFoundSelect.value),
+  );
+  browser.runtime.sendMessage({ action: "refreshSettings" });
+}
+
 async function clearCache() {
   await cache.clearCache();
   await printCacheSize(cacheSizeElement);
@@ -380,14 +402,10 @@ async function fetchProfilePicture() {
   // Uses the configured chain and privacy mode, so the preview shows what this
   // profile would actually resolve to rather than a best case the user's own
   // settings would never produce.
-  const fetcher = new ProfilePictureFetcher(
-    window,
-    mail,
-    "duckduckgo",
-    true,
-    providerState,
-    privacyModeState,
-  );
+  const fetcher = new ProfilePictureFetcher(window, mail, "duckduckgo", true, {
+    providers: providerState,
+    privacyMode: privacyModeState,
+  });
   const url = await fetcher.getAvatar();
 
   if (!url) {
@@ -437,6 +455,7 @@ function setupLocalization() {
 async function initialize() {
   await printCacheSize(cacheSizeElement);
   await initProviders();
+  await initCacheRefresh();
   initOptions();
   clearCacheButton.addEventListener("click", clearCache);
   inboxListCheckbox.addEventListener("change", setInboxList);
@@ -445,6 +464,8 @@ async function initialize() {
     setContactsIntegration,
   );
   privacyModeSelect.addEventListener("change", setPrivacyMode);
+  cacheFoundSelect.addEventListener("change", setCacheRefreshFound);
+  cacheNotFoundSelect.addEventListener("change", setCacheRefreshNotFound);
   fetchButton.addEventListener("click", fetchProfilePicture);
   setupLocalization();
 }
