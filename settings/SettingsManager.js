@@ -2,6 +2,7 @@ import {
   PrivacyMode,
   reconcileProviderList,
 } from "../providers/registry.js";
+import { sanitizeOverrides } from "../src/DomainOverrides.js";
 import defaultSettings from "./defaultSettings.js";
 
 class SettingsManager {
@@ -103,6 +104,19 @@ class SettingsManager {
 
   async setInitialsColor(value) {
     await this.setSetting("initialsColor", value);
+  }
+
+  /**
+   * Returns the per-sender rules, sanitised so callers never see a
+   * half-finished entry.
+   * @returns {Promise<Array<Object>>}
+   */
+  async getDomainOverrides() {
+    return sanitizeOverrides(await this.getSetting("domainOverrides"));
+  }
+
+  async setDomainOverrides(value) {
+    await this.setSetting("domainOverrides", sanitizeOverrides(value));
   }
 }
 

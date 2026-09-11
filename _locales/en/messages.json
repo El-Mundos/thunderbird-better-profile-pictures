@@ -235,5 +235,38 @@
   },
   "initialsColorHelp": {
     "message": "Initials are shown when no picture is found. A colour per sender makes them easier to tell apart; one grey keeps a long list calmer."
+  },
+  "overridesHeader": {
+    "message": "Rules for specific senders"
+  },
+  "overridesDescription": {
+    "message": "Override what is shown for one address or a whole domain. A rule for an address wins over a rule for its domain."
+  },
+  "overrideMatchPlaceholder": {
+    "message": "example.com or name@example.com"
+  },
+  "overrideUrlPlaceholder": {
+    "message": "https://example.com/logo.png"
+  },
+  "overrideModeHide": {
+    "message": "Show initials"
+  },
+  "overrideModeUrl": {
+    "message": "Use this picture"
+  },
+  "overrideAddButton": {
+    "message": "Add rule"
+  },
+  "overrideRemoveButton": {
+    "message": "Remove"
+  },
+  "overrideErrorMatch": {
+    "message": "Enter an address or a domain."
+  },
+  "overrideErrorDuplicate": {
+    "message": "There is already a rule for that address or domain."
+  },
+  "overrideErrorUrl": {
+    "message": "Enter a picture address starting with https://"
   }
 }

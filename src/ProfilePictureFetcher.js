@@ -1,4 +1,5 @@
 import defaultSettings from "../settings/defaultSettings.js";
+import { Scope } from "../providers/Provider.js";
 import ProviderFactory from "../providers/ProviderFactory.js";
 import {
   PrivacyMode,
@@ -7,6 +8,7 @@ import {
   reconcileProviderList,
 } from "../providers/registry.js";
 import Author from "./Author.js";
+import { findOverride, sanitizeOverrides } from "./DomainOverrides.js";
 import CacheStorage from "./CacheStorage.js";
 import { AvatarStrategy } from "./strategies/AvatarStrategy.js";
 import { CacheStrategy } from "./strategies/CacheStrategy.js";
@@ -61,6 +63,7 @@ export default class ProfilePictureFetcher {
       privacyMode = PrivacyMode.OFF,
       refreshFoundMs = daysToMs(defaultSettings.cacheRefreshFoundDays),
       refreshNotFoundMs = daysToMs(defaultSettings.cacheRefreshNotFoundDays),
+      overrides = defaultSettings.domainOverrides,
     } = options;
     this.wdow = wdow;
     this.author = authorObject;
@@ -81,6 +84,7 @@ export default class ProfilePictureFetcher {
     );
     this.refreshFoundMs = refreshFoundMs;
     this.refreshNotFoundMs = refreshNotFoundMs;
+    this.overrides = sanitizeOverrides(overrides);
     // Providers are constructed lazily: building all eight up front meant
     // instantiating scrapers that the configured chain never consults.
     this.providerInstances = new Map();
@@ -350,6 +354,24 @@ export default class ProfilePictureFetcher {
    */
   async getAvatarBlob() {
     try {
+      const override = findOverride(this.overrides, this.author);
+      if (override) {
+        if (override.mode === "hide") {
+          // A user rule, not a failed lookup, so no notFound marker is written.
+          // Caching one would keep the sender blank after the rule is removed,
+          // until the marker expired.
+          return null;
+        }
+        const pinned = await this.fetchOverrideImage(override);
+        if (pinned) {
+          return pinned;
+        }
+        // A pinned image that fails to load falls through to the normal chain
+        // rather than leaving the sender blank: a dead URL in a rule written
+        // months ago should degrade, not break.
+        console.warn(`Pinned image failed for ${override.match}`);
+      }
+
       const response = this.author.isPublic()
         ? await this.getPublicAvatar()
         : await this.getDomainAvatar();
@@ -361,6 +383,33 @@ export default class ProfilePictureFetcher {
     } catch (error) {
       console.error("Error fetching avatar", error);
       return null;
+    }
+  }
+
+  /**
+   * Fetches a pinned image through the normal download path.
+   *
+   * Wraps the URL in a minimal provider so OnlineStrategy's fetching, content
+   * type handling and conversion are reused rather than duplicated. Caching is
+   * suppressed for the duration: a pinned image stored under the domain key
+   * would outlive the rule that produced it and keep being served after the
+   * rule was removed or changed.
+   *
+   * @param {Object} override - The matching rule.
+   * @returns {Promise<Blob|null>} The image, or null if it could not be loaded.
+   */
+  async fetchOverrideImage(override) {
+    const wasDisabled = this.disableCache;
+    this.disableCache = true;
+    try {
+      const provider = {
+        name: "override",
+        scope: Scope.DOMAIN,
+        getUrl: async () => override.url,
+      };
+      return await new OnlineStrategy(this, provider, this.author).fetchAvatar();
+    } finally {
+      this.disableCache = wasDisabled;
     }
   }
 

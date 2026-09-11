@@ -9,6 +9,7 @@
  * @property {number} WAIT_TIME_MS - Wait time in milliseconds for displaying the inbox list.
  * @property {number} SUBBATCH_SIZE - Size of the subbatch for processing messages.
  * @property {Array<{id: string, enabled: boolean}>} providers - Avatar providers in lookup order. MUTABLE.
+ * @property {Array<{match: string, mode: string, url?: string}>} domainOverrides - Per-sender rules. MUTABLE.
  * @property {string} avatarShape - circle, rounded or square. MUTABLE.
  * @property {string} initialsColor - auto (derived from the address) or neutral. MUTABLE.
  * @property {string} privacyMode - One of PrivacyMode: off, balanced, strict. MUTABLE.
@@ -51,6 +52,7 @@ const defaultSettings = {
   // Defaults to "off" so upgrading changes nobody's behaviour. A user who wants
   // the stricter modes opts in.
   privacyMode: "off",
+  domainOverrides: [],
   avatarShape: "circle",
   initialsColor: "auto",
   // Avatar providers, in the order they are tried. Only enabled entries are
