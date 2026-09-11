@@ -172,6 +172,9 @@ export default class ProfilePictureFetcher {
    * @param {string} source Source of the icon
    */
   async saveBlobToCache(blob, iconDomain, source) {
+    if (this.disableCache) {
+      return;
+    }
     const iconPath = `ICON_${iconDomain}.ico`;
 
     await this.cache.saveIcon(iconPath, blob);
@@ -196,6 +199,9 @@ export default class ProfilePictureFetcher {
    * @param {string} iconDomain Domain associated with the icon
    */
   async saveNotFoundToCache(iconDomain) {
+    if (this.disableCache) {
+      return;
+    }
     const notFoundObject = {
       type: "notFound",
       ts: Date.now(),
