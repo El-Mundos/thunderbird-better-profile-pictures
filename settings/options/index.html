@@ -37,6 +37,20 @@
       </p>
     </blockquote>
   </section>
+  <section id="privacy">
+    <h4 data-l10n-id="privacyHeader">Privacy</h4>
+    <fieldset>
+      <label for="privacyMode" data-l10n-id="privacyModeLabel">Look up pictures online</label>
+      <select id="privacyMode" name="privacyMode">
+        <option value="off" data-l10n-id="privacyModeOff">Use every enabled source</option>
+        <option value="balanced" data-l10n-id="privacyModeBalanced">Only the sender's own DNS records</option>
+        <option value="strict" data-l10n-id="privacyModeStrict">Never — offline only</option>
+      </select>
+    </fieldset>
+    <blockquote>
+      <p id="privacyModeHint"></p>
+    </blockquote>
+  </section>
   <section id="providers">
     <h4 data-l10n-id="providersHeader">Picture sources</h4>
     <blockquote>

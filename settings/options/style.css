@@ -910,3 +910,10 @@ a[aria-busy="true"] {
 .provider-move:disabled {
   opacity: 0.35;
 }
+
+/* A source blocked by the privacy mode stays visible but inert, so the mode's
+   effect is legible rather than the list silently getting shorter. */
+.provider-row.is-blocked .provider-label {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

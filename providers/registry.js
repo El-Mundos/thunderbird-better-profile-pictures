@@ -13,10 +13,16 @@
  *   meaningful for public mail hosts: a domain lookup on gmail.com returns
  *   Gmail's own logo for every sender, which is why the public chain has always
  *   been restricted to them.
- * @property {boolean} thirdParty - Whether resolving sends the correspondent's
- *   address or domain to a service unrelated to the sender. BIMI and the
- *   favicon scraper talk only to the sender's own domain; everything else
- *   discloses who you are receiving mail from to an outside party.
+ * @property {"dns"|"sender-site"|"third-party"} disclosure - Who learns that you
+ *   received this mail, when the provider resolves.
+ *     "dns"         - a DNS lookup against the sender's domain, plus fetching
+ *                     the logo the record points at. No outside party, and no
+ *                     request to the sender's web server.
+ *     "sender-site" - fetches and parses a page from the sender's own web
+ *                     server. No outside party, but a direct, timed hit on
+ *                     their site that correlates with you opening the message.
+ *     "third-party" - sends the correspondent's address or domain to a service
+ *                     unrelated to the sender.
  * @property {boolean} slow - Whether a miss is expensive. Currently only the
  *   favicon scraper, which fetches and parses a full page.
  */
@@ -27,59 +33,68 @@ export const PROVIDERS = [
     id: "bimi",
     labelKey: "providerBimi",
     kind: "domain",
-    thirdParty: false,
+    disclosure: "dns",
     slow: false,
   },
   {
     id: "gravatar",
     labelKey: "providerGravatar",
     kind: "email",
-    thirdParty: true,
+    disclosure: "third-party",
     slow: false,
   },
   {
     id: "libravatar",
     labelKey: "providerLibravatar",
     kind: "email",
-    thirdParty: true,
+    disclosure: "third-party",
     slow: false,
   },
   {
     id: "duckduckgo",
     labelKey: "providerDuckDuckGo",
     kind: "domain",
-    thirdParty: true,
+    disclosure: "third-party",
     slow: false,
   },
   {
     id: "google",
     labelKey: "providerGoogle",
     kind: "domain",
-    thirdParty: true,
+    disclosure: "third-party",
     slow: false,
   },
   {
     id: "iconhorse",
     labelKey: "providerIconHorse",
     kind: "domain",
-    thirdParty: true,
+    disclosure: "third-party",
     slow: false,
   },
   {
     id: "splitbee",
     labelKey: "providerSplitbee",
     kind: "domain",
-    thirdParty: true,
+    disclosure: "third-party",
     slow: false,
   },
   {
     id: "favicon_webpage",
     labelKey: "providerFaviconWebpage",
     kind: "domain",
-    thirdParty: false,
+    disclosure: "sender-site",
     slow: true,
   },
 ];
+
+/**
+ * Whether a provider discloses the correspondent to an unrelated service.
+ * @param {ProviderDescriptor} descriptor
+ * @returns {boolean}
+ */
+export function isThirdParty(descriptor) {
+  return descriptor.disclosure === "third-party";
+}
 
 /**
  * Looks up a provider descriptor by id.
@@ -94,9 +109,9 @@ export function getProviderDescriptor(id) {
  * Privacy modes, in increasing order of strictness.
  *
  * OFF      - every enabled provider runs; current behaviour.
- * BALANCED - no third-party lookups. BIMI and the favicon scraper still run:
- *            both talk only to the sender's own domain, which your mail client
- *            already contacted by receiving the message.
+ * BALANCED - DNS-backed lookups only, which today means BIMI. No outside
+ *            service learns who you correspond with, and the sender's web
+ *            server sees no request tied to you opening the message.
  * STRICT   - no network lookups of any kind. Address book photos, the on-disk
  *            cache and generated initials only.
  * @enum {string}
@@ -114,11 +129,6 @@ export const PrivacyMode = {
  * removed here never issues a request. Local steps — address book, cache,
  * initials — sit outside the provider chain and are unaffected by every mode.
  *
- * TODO(sergio): implement the filtering. The BALANCED case is the interesting
- * one: the descriptor's `thirdParty` flag already tells you whether resolving a
- * provider discloses the correspondent to an outside service, so the question
- * is what that mode should actually guarantee.
- *
  * @param {Array<{id: string, enabled: boolean}>} providerList - Chain in order.
  * @param {string} mode - A PrivacyMode value.
  * @returns {Array<{id: string, enabled: boolean}>} Chain with disallowed
@@ -130,8 +140,34 @@ export function filterProvidersForPrivacy(providerList, mode) {
   if (mode === PrivacyMode.OFF) {
     return providerList;
   }
-  // TODO(sergio): handle BALANCED and STRICT.
-  return providerList;
+  // BALANCED permits only DNS-backed lookups. The favicon scraper is excluded
+  // even though it contacts no outside party: fetching a page from the sender's
+  // web server is a timed request that correlates with you opening the message,
+  // which is a louder signal than resolving a DNS record.
+  const allowed = mode === PrivacyMode.BALANCED ? new Set(["dns"]) : new Set();
+  return providerList.map((entry) => {
+    const descriptor = getProviderDescriptor(entry.id);
+    if (!descriptor || allowed.has(descriptor.disclosure)) {
+      return entry;
+    }
+    // Disabled rather than dropped, so the options page can still show the
+    // source greyed out and the user's own choices survive turning the mode off.
+    return { ...entry, enabled: false };
+  });
+}
+
+/**
+ * Whether a provider is permitted under a privacy mode, ignoring whether the
+ * user has it switched on. Used by the options UI to grey out blocked rows.
+ * @param {ProviderDescriptor} descriptor
+ * @param {string} mode - A PrivacyMode value.
+ * @returns {boolean}
+ */
+export function isAllowedInMode(descriptor, mode) {
+  if (mode === PrivacyMode.OFF) {
+    return true;
+  }
+  return mode === PrivacyMode.BALANCED && descriptor.disclosure === "dns";
 }
 
 /**

@@ -9,6 +9,7 @@
  * @property {number} WAIT_TIME_MS - Wait time in milliseconds for displaying the inbox list.
  * @property {number} SUBBATCH_SIZE - Size of the subbatch for processing messages.
  * @property {Array<{id: string, enabled: boolean}>} providers - Avatar providers in lookup order. MUTABLE.
+ * @property {string} privacyMode - One of PrivacyMode: off, balanced, strict. MUTABLE.
  */
 const defaultSettings = {
   inboxListEnabled: true,
@@ -38,6 +39,9 @@ const defaultSettings = {
   WAIT_TIME_MS: 200,
   SUBBATCH_SIZE: 15,
   MAX_REQUEST_SIZE: 100,
+  // Defaults to "off" so upgrading changes nobody's behaviour. A user who wants
+  // the stricter modes opts in.
+  privacyMode: "off",
   // Avatar providers, in the order they are tried. Only enabled entries are
   // consulted, and the first hit wins, so order is a real behaviour knob:
   // earlier entries cost latency on every miss but win on every hit.

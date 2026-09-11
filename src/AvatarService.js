@@ -26,6 +26,11 @@ export default class AvatarService {
      * @type {Array<{id: string, enabled: boolean}>|null}
      */
     this.providerList = null;
+    /**
+     * Active privacy mode, cached alongside the chain.
+     * @type {string|null}
+     */
+    this.privacyMode = null;
   }
 
   /**
@@ -45,12 +50,33 @@ export default class AvatarService {
   }
 
   /**
+   * Returns the active privacy mode, loading it on first use.
+   *
+   * On a read failure this falls back to the default rather than to the
+   * strictest mode. Failing closed would silently stop all lookups and look
+   * like the add-on being broken, with no way for the user to tell why.
+   * @returns {Promise<string>} A PrivacyMode value.
+   */
+  async getPrivacyMode() {
+    if (this.privacyMode === null) {
+      try {
+        this.privacyMode = await this.settingsManager.getPrivacyMode();
+      } catch (error) {
+        console.error("Error loading privacy mode, using default", error);
+        this.privacyMode = defaultSettings.privacyMode;
+      }
+    }
+    return this.privacyMode;
+  }
+
+  /**
    * Drops the cached provider chain so the next lookup re-reads it, and clears
    * resolved avatars: a chain change can produce a different picture for a
    * correspondent already resolved under the old order.
    */
   invalidateSettings() {
     this.providerList = null;
+    this.privacyMode = null;
     this.sessionCacheAvatarUrls = {};
   }
 
@@ -95,12 +121,14 @@ export default class AvatarService {
       }
       this.sessionCacheAvatarUrls[lcAuthor] = Status.WAITING;
       const providerList = await this.getProviderList();
+      const privacyMode = await this.getPrivacyMode();
       const profilePictureFetcher = new ProfilePictureFetcher(
         window,
         author,
         "duckduckgo",
         false,
         providerList,
+        privacyMode,
       );
       this.sessionCacheAvatarUrls[lcAuthor] =
         await profilePictureFetcher.getAvatar();

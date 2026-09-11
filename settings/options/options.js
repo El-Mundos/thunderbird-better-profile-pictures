@@ -1,4 +1,9 @@
-import { getProviderDescriptor } from "../../providers/registry.js";
+import {
+  PrivacyMode,
+  getProviderDescriptor,
+  isAllowedInMode,
+  isThirdParty,
+} from "../../providers/registry.js";
 import Author from "../../src/Author.js";
 import CacheStorage from "../../src/CacheStorage.js";
 import ProfilePictureFetcher from "../../src/ProfilePictureFetcher.js";
@@ -11,6 +16,8 @@ const contactsIntegrationCheckbox = document.getElementById(
   "contactsIntegration",
 );
 const providerListElement = document.getElementById("providerList");
+const privacyModeSelect = document.getElementById("privacyMode");
+const privacyModeHint = document.getElementById("privacyModeHint");
 const emailInput = document.getElementById("email");
 const fetchButton = document.getElementById("fetchButton");
 const profilePictureDiv = document.getElementById("profilePicture");
@@ -139,6 +146,13 @@ function renderImagePreview(url) {
 let providerState = [];
 
 /**
+ * Active privacy mode. Held alongside providerState because every row's
+ * rendering depends on it.
+ * @type {string}
+ */
+let privacyModeState = PrivacyMode.OFF;
+
+/**
  * Persists the current chain and tells the background to pick it up.
  */
 async function persistProviders() {
@@ -193,10 +207,19 @@ function buildProviderRow(entry, index) {
   const label = document.createElement("label");
   label.className = "provider-label";
 
+  const allowed = isAllowedInMode(descriptor, privacyModeState);
+  if (!allowed) {
+    row.classList.add("is-blocked");
+  }
+
   const checkbox = document.createElement("input");
   checkbox.type = "checkbox";
   checkbox.setAttribute("role", "switch");
-  checkbox.checked = entry.enabled;
+  // A blocked source reads as off, because it is: the chain filters it out
+  // before any lookup. The user's own choice is kept in storage untouched, so
+  // turning the mode back off restores it.
+  checkbox.checked = entry.enabled && allowed;
+  checkbox.disabled = !allowed;
   checkbox.addEventListener("change", async () => {
     providerState[index].enabled = checkbox.checked;
     await persistProviders();
@@ -207,7 +230,10 @@ function buildProviderRow(entry, index) {
     browser.i18n.getMessage(descriptor.labelKey) || descriptor.id;
 
   label.append(checkbox, name);
-  if (descriptor.thirdParty) {
+  if (!allowed) {
+    label.append(buildProviderBadge("providerBadgeBlocked", "is-blocked-badge"));
+  }
+  if (isThirdParty(descriptor)) {
     label.append(
       buildProviderBadge("providerBadgeThirdParty", "is-third-party"),
     );
@@ -252,8 +278,33 @@ function renderProviders() {
   });
 }
 
+/**
+ * Describes the active mode under the selector, so the consequence of the
+ * choice is visible without having to read the greyed-out rows.
+ */
+function renderPrivacyHint() {
+  const hintKey = {
+    [PrivacyMode.OFF]: "privacyModeOffHint",
+    [PrivacyMode.BALANCED]: "privacyModeBalancedHint",
+    [PrivacyMode.STRICT]: "privacyModeStrictHint",
+  }[privacyModeState];
+  privacyModeHint.textContent = browser.i18n.getMessage(hintKey);
+}
+
+async function setPrivacyMode() {
+  privacyModeState = privacyModeSelect.value;
+  await settingsManager.setPrivacyMode(privacyModeState);
+  renderPrivacyHint();
+  // Re-render: which sources are blocked changed.
+  renderProviders();
+  browser.runtime.sendMessage({ action: "refreshSettings" });
+}
+
 async function initProviders() {
   providerState = await settingsManager.getProviders();
+  privacyModeState = await settingsManager.getPrivacyMode();
+  privacyModeSelect.value = privacyModeState;
+  renderPrivacyHint();
   renderProviders();
 }
 
@@ -326,7 +377,17 @@ async function fetchProfilePicture() {
   clearProfilePicture();
 
   const mail = await Author.fromAuthor(emailInput.value);
-  const fetcher = new ProfilePictureFetcher(window, mail, "duckduckgo", true);
+  // Uses the configured chain and privacy mode, so the preview shows what this
+  // profile would actually resolve to rather than a best case the user's own
+  // settings would never produce.
+  const fetcher = new ProfilePictureFetcher(
+    window,
+    mail,
+    "duckduckgo",
+    true,
+    providerState,
+    privacyModeState,
+  );
   const url = await fetcher.getAvatar();
 
   if (!url) {
@@ -383,6 +444,7 @@ async function initialize() {
     "change",
     setContactsIntegration,
   );
+  privacyModeSelect.addEventListener("change", setPrivacyMode);
   fetchButton.addEventListener("click", fetchProfilePicture);
   setupLocalization();
 }

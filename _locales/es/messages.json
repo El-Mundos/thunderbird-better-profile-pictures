@@ -142,5 +142,32 @@
   },
   "providerMoveDown": {
     "message": "Bajar"
+  },
+  "privacyHeader": {
+    "message": "Privacidad"
+  },
+  "privacyModeLabel": {
+    "message": "Buscar imágenes en línea"
+  },
+  "privacyModeOff": {
+    "message": "Usar todas las fuentes activadas"
+  },
+  "privacyModeBalanced": {
+    "message": "Solo los registros DNS del remitente"
+  },
+  "privacyModeStrict": {
+    "message": "Nunca — solo sin conexión"
+  },
+  "privacyModeOffHint": {
+    "message": "Se puede contactar con cualquier fuente que actives abajo. Servicios externos conocerán los dominios, y en algunos casos las direcciones, de quienes te escriben."
+  },
+  "privacyModeBalancedHint": {
+    "message": "Solo se usa BIMI: una consulta DNS al dominio del propio remitente. No se contacta con ningún servicio externo ni se hace ninguna petición a su sitio web. Se encontrarán menos imágenes."
+  },
+  "privacyModeStrictHint": {
+    "message": "No se buscan imágenes en línea. Solo se muestran fotos de la libreta de direcciones, imágenes ya guardadas en caché e iniciales generadas."
+  },
+  "providerBadgeBlocked": {
+    "message": "bloqueado"
   }
 }
