@@ -1,3 +1,4 @@
+import defaultSettings from "../settings/defaultSettings.js";
 import ProviderFactory from "../providers/ProviderFactory.js";
 import Author from "./Author.js";
 import CacheStorage from "./CacheStorage.js";
@@ -158,7 +159,22 @@ export default class ProfilePictureFetcher {
 
     try {
       if (fileInfos.type === "notFound") {
+        // Enforce the not-found TTL so dead lookups eventually retry instead of
+        // being cached forever. Treat an expired marker as a cache miss.
+        const age = Date.now() - (fileInfos.ts || 0);
+        if (age > defaultSettings.notFoundRefreshIntervalMs) {
+          this.cache.removeProperty(key);
+          return false;
+        }
         return "notFound";
+      }
+      // Refresh stale icons so newly-added BIMI records or updated logos get
+      // picked up. Treat an expired icon as a cache miss so the strategy chain
+      // re-resolves it (BIMI is tried first).
+      const iconAge = Date.now() - (fileInfos.ts || 0);
+      if (iconAge > defaultSettings.foundRefreshIntervalMs) {
+        this.cache.removeProperty(key);
+        return false;
       }
       const blob = await this.cache.getIcon(fileInfos.path, fileInfos.type);
       if (originalDomain) {

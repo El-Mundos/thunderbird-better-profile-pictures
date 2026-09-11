@@ -5,6 +5,7 @@
  * @property {boolean} contactsIntegrationEnabled - Whether the contacts integration feature is enabled. MUTABLE.
  * @property {Array<string>} publicMails - List of public mail domains.
  * @property {number} notFoundRefreshIntervalMs - Interval in milliseconds to refresh not found avatars.
+ * @property {number} foundRefreshIntervalMs - Interval after which a cached icon is re-fetched, so newly-added BIMI records / logo changes are picked up.
  * @property {number} WAIT_TIME_MS - Wait time in milliseconds for displaying the inbox list.
  * @property {number} SUBBATCH_SIZE - Size of the subbatch for processing messages.
  */
@@ -32,6 +33,7 @@ const defaultSettings = {
     "yandex",
   ],
   notFoundRefreshIntervalMs: 1000 * 3600 * 24 * 30,
+  foundRefreshIntervalMs: 1000 * 3600 * 24 * 14,
   WAIT_TIME_MS: 500,
   SUBBATCH_SIZE: 15,
   MAX_REQUEST_SIZE: 100,
