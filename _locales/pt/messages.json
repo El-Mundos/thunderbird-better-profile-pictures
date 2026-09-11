@@ -7,10 +7,6 @@
     "message": "Melhore sua caixa de entrada do Thunderbird com imagens de perfil automáticas, adicionando logotipos de empresas ou avatares a e-mails e contatos, suportando BIMI",
     "description": "Descrição da extensão."
   },
-  "featuresHeader": {
-    "message": "Recursos",
-    "description": "Cabeçalho para a seção de recursos."
-  },
   "contactsIntegrationLabel": {
     "message": "Adicionar automaticamente uma foto de perfil ao salvar um contato",
     "description": "Rótulo para a caixa de seleção de integração de contatos."
@@ -22,34 +18,6 @@
   "inboxListDescription": {
     "message": "Ative esta opção para mostrar fotos de perfil na lista de entrada. (somente para Thunderbird 121+)",
     "description": "Descrição do recurso da lista de entrada."
-  },
-  "inboxListWarning": {
-    "message": "Aviso: Este recurso é experimental e pode não funcionar como esperado. Se você encontrar algum problema, desative esta opção e reporte o problema.",
-    "description": "Mensagem de aviso para o recurso da lista de entrada."
-  },
-  "inboxListKnownIssues": {
-    "message": "Problemas conhecidos:",
-    "description": "Cabeçalho para a lista de problemas conhecidos."
-  },
-  "inboxListIssueLaggyScrolling": {
-    "message": "Rolagem lenta",
-    "description": "Problema conhecido: Rolagem lenta."
-  },
-  "inboxListIssueVisualFlickering": {
-    "message": "Cintilação visual (marcadores de posição e ícones)",
-    "description": "Problema conhecido: Cintilação visual."
-  },
-  "inboxListIssueSlowFirstLoad": {
-    "message": "Lento durante o primeiro carregamento",
-    "description": "Problema conhecido: Lento durante o primeiro carregamento."
-  },
-  "inboxListIssueBigFolders": {
-    "message": "Problemas com pastas grandes",
-    "description": "Problema conhecido: Problemas com pastas grandes."
-  },
-  "cacheHeader": {
-    "message": "Cache",
-    "description": "Cabeçalho para a seção de cache."
   },
   "cacheSizeLabel": {
     "message": "Tamanho:",

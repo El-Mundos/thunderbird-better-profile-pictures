@@ -7,10 +7,6 @@
     "message": "Ulepsz swoją skrzynkę odbiorczą Thunderbird za pomocą automatycznych zdjęć profilowych, dodając loga firm lub awatary do e-maili i kontaktów, wspierając BIMI",
     "description": "Opis rozszerzenia."
   },
-  "featuresHeader": {
-    "message": "Funkcje",
-    "description": "Nagłówek sekcji funkcji."
-  },
   "contactsIntegrationLabel": {
     "message": "Automatycznie dodaj zdjęcie profilowe podczas zapisywania kontaktu",
     "description": "Etykieta dla pola wyboru integracji kontaktów."
@@ -22,34 +18,6 @@
   "inboxListDescription": {
     "message": "Włącz tę opcję, aby wyświetlać zdjęcia profilowe na liście skrzynki odbiorczej. (tylko dla Thunderbird 121+)",
     "description": "Opis funkcji listy skrzynki odbiorczej."
-  },
-  "inboxListWarning": {
-    "message": "Ostrzeżenie: Ta funkcja jest eksperymentalna i może nie działać zgodnie z oczekiwaniami. Jeśli napotkasz problemy, wyłącz tę opcję i zgłoś problem.",
-    "description": "Ostrzeżenie dla funkcji listy skrzynki odbiorczej."
-  },
-  "inboxListKnownIssues": {
-    "message": "Znane problemy:",
-    "description": "Nagłówek listy znanych problemów."
-  },
-  "inboxListIssueLaggyScrolling": {
-    "message": "Powolne przewijanie",
-    "description": "Znany problem: Powolne przewijanie."
-  },
-  "inboxListIssueVisualFlickering": {
-    "message": "Migotanie wizualne (zastępniki i ikony)",
-    "description": "Znany problem: Migotanie wizualne."
-  },
-  "inboxListIssueSlowFirstLoad": {
-    "message": "Powolne pierwsze ładowanie",
-    "description": "Znany problem: Powolne pierwsze ładowanie."
-  },
-  "inboxListIssueBigFolders": {
-    "message": "Problemy z dużymi folderami",
-    "description": "Znany problem: Problemy z dużymi folderami."
-  },
-  "cacheHeader": {
-    "message": "Pamięć podręczna",
-    "description": "Nagłówek sekcji pamięci podręcznej."
   },
   "cacheSizeLabel": {
     "message": "Rozmiar:",

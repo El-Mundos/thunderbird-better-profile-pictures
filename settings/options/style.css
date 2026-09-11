@@ -849,7 +849,227 @@ a[aria-busy="true"] {
   pointer-events: none;
 }
 
-/* ---- Picture sources ------------------------------------------------- */
+/* =====================================================================
+   Add-on settings layer
+   =====================================================================
+
+   This page renders inside a Thunderbird dialog, so it deliberately keeps
+   the host's system font and the base blue accent rather than introducing
+   a voice of its own — a settings panel that looks like a different
+   product than the window containing it reads as a bug.
+
+   The work here is hierarchy: one page title, then groups, then rows that
+   all share a shape, so a setting can be found by scanning rather than by
+   reading. ------------------------------------------------------------ */
+
+/* The vendored Pico build ships a light palette only: every variable sits
+   behind :root:not([data-theme="dark"]) and no dark counterpart is ever
+   defined. In Thunderbird's dark theme that left this page a bright white
+   panel. Follow the OS/host preference, and let an explicit data-theme
+   override win in both directions. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --pico-background-color: #13171f;
+    --pico-color: #c6cbd4;
+    --pico-h1-color: #f0f2f5;
+    --pico-h2-color: #e6e9ee;
+    --pico-h3-color: #dde1e8;
+    --pico-muted-color: #858d9c;
+    --pico-muted-border-color: #232a36;
+    --pico-text-selection-color: rgba(97, 137, 245, 0.3);
+
+    --pico-primary: #7fa4f5;
+    --pico-primary-background: #2b62d4;
+    --pico-primary-border: #2b62d4;
+    --pico-primary-hover: #9fbaf8;
+    --pico-primary-hover-background: #3b72e4;
+    --pico-primary-hover-border: #3b72e4;
+    --pico-primary-focus: rgba(97, 137, 245, 0.375);
+    --pico-primary-inverse: #fff;
+
+    --pico-secondary: #9aa3b2;
+    --pico-secondary-background: #48505f;
+    --pico-secondary-border: #48505f;
+    --pico-secondary-hover: #b3bac6;
+    --pico-secondary-hover-background: #58606f;
+    --pico-secondary-hover-border: #58606f;
+    --pico-secondary-focus: rgba(154, 163, 178, 0.25);
+    --pico-secondary-inverse: #fff;
+
+    --pico-form-element-background-color: #1a1f29;
+    --pico-form-element-selected-background-color: #262d3a;
+    --pico-form-element-border-color: #2d3542;
+    --pico-form-element-color: #e2e6eb;
+    --pico-form-element-placeholder-color: #7d8593;
+    --pico-form-element-active-background-color: #1a1f29;
+    --pico-form-element-active-border-color: var(--pico-primary-border);
+    --pico-form-element-focus-color: var(--pico-primary-border);
+
+    --pico-switch-background-color: #39414f;
+    --pico-switch-checked-background-color: var(--pico-primary-background);
+    --pico-switch-color: #fff;
+
+    --pico-card-background-color: #171c25;
+    --pico-card-border-color: #232a36;
+    --pico-card-sectioning-background-color: #1a1f29;
+    --pico-blockquote-border-color: #232a36;
+    --pico-blockquote-footer-color: #858d9c;
+    --pico-code-background-color: #1a1f29;
+    --pico-code-color: #b6bdc8;
+    --pico-mark-background-color: #4a3f1c;
+    --pico-mark-color: #f0e6c8;
+    --pico-tooltip-background-color: #e6e9ee;
+    --pico-tooltip-color: #13171f;
+    --pico-modal-overlay-background-color: rgba(10, 12, 16, 0.7);
+    --pico-table-border-color: #232a36;
+  }
+}
+
+/* ---- Page shell ----------------------------------------------------- */
+
+body {
+  padding: 0;
+  background-color: var(--pico-background-color);
+}
+
+.page {
+  max-width: 34rem;
+  margin: 0 auto;
+  padding: 1.75rem 1.25rem 2.5rem;
+}
+
+.page-header {
+  margin-bottom: 2rem;
+}
+
+.page-title {
+  font-size: 1.375rem;
+  font-weight: 600;
+  line-height: 1.25;
+  margin: 0 0 0.35rem;
+}
+
+/* Kept under ~70 characters per line: this is the only prose on the page
+   that is read rather than scanned. */
+.page-intro {
+  margin: 0;
+  max-width: 32rem;
+  color: var(--pico-muted-color);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+/* ---- Groups --------------------------------------------------------- */
+
+.group {
+  margin: 0 0 2rem;
+}
+
+.group:last-of-type {
+  margin-bottom: 0;
+}
+
+/* The rule carries the grouping, so the heading itself can stay quiet and
+   close to body size — five shouting headings in a small dialog compete
+   with the settings they label. */
+.group-title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.3;
+  margin: 0 0 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--pico-muted-border-color);
+}
+
+.group-intro {
+  margin: -0.25rem 0 0.85rem;
+  color: var(--pico-muted-color);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+/* ---- Settings rows -------------------------------------------------- */
+
+.setting + .setting {
+  margin-top: 1.1rem;
+}
+
+.setting-control {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin: 0;
+  cursor: pointer;
+  font-size: 0.9375rem;
+}
+
+.setting-control input[type="checkbox"] {
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.setting-name {
+  margin: 0;
+  font-size: 0.9375rem;
+}
+
+.setting-input {
+  width: auto;
+  min-width: 15rem;
+  margin: 0;
+  font-size: 0.875rem;
+}
+
+/* Help text is indented to the switch label's text column so it reads as
+   belonging to that control rather than to the group. */
+.setting-help {
+  margin: 0.4rem 0 0 2.85rem;
+  color: var(--pico-muted-color);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.setting-row + .setting-help {
+  margin-left: 0;
+}
+
+.setting-note {
+  margin-top: 0.3rem;
+}
+
+/* The vendored Pico build defines the --pico-secondary-* variables but ships
+   no .secondary class selector, so the class alone leaves the button primary
+   blue. Clearing saved pictures is a housekeeping action, not this page's main
+   one, so it is styled down explicitly. */
+#cache .setting-row button {
+  width: auto;
+  margin: 0;
+  padding: 0.35rem 0.9rem;
+  font-size: 0.8125rem;
+  background-color: transparent;
+  color: var(--pico-secondary);
+  border-color: var(--pico-secondary-border);
+}
+
+#cache .setting-row button:hover:not(:disabled) {
+  background-color: var(--pico-secondary-background);
+  border-color: var(--pico-secondary-hover-border);
+  color: var(--pico-secondary-inverse);
+}
+
+#cache .setting-row button:disabled {
+  opacity: 0.5;
+}
+
+/* ---- Picture sources ------------------------------------------------ */
 
 .provider-list {
   list-style: none;
@@ -861,8 +1081,8 @@ a[aria-busy="true"] {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: calc(var(--pico-spacing) * 0.5);
-  padding: calc(var(--pico-spacing) * 0.4) 0;
+  gap: 0.5rem;
+  padding: 0.45rem 0;
   border-bottom: 1px solid var(--pico-muted-border-color);
 }
 
@@ -873,47 +1093,103 @@ a[aria-busy="true"] {
 .provider-label {
   display: flex;
   align-items: center;
-  gap: calc(var(--pico-spacing) * 0.4);
+  gap: 0.5rem;
   margin: 0;
   cursor: pointer;
+  font-size: 0.875rem;
+  min-width: 0;
 }
 
+.provider-label input[type="checkbox"] {
+  margin: 0;
+  flex-shrink: 0;
+}
+
+/* Badges are metadata, not emphasis: they sit at the quietest weight the
+   contrast floor allows, so the source names stay the scannable layer. */
 .provider-badge {
-  font-size: 0.7em;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  padding: 0.1em 0.45em;
-  border-radius: 1em;
+  font-size: 0.6875rem;
+  padding: 0.05em 0.45em;
+  border-radius: 0.75em;
   border: 1px solid var(--pico-muted-border-color);
   color: var(--pico-muted-color);
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .provider-controls {
   display: flex;
-  gap: 0.25rem;
+  gap: 0.2rem;
   flex-shrink: 0;
 }
 
-/* Reorder arrows are affordances, not primary actions: keep them quiet so the
-   enable switches stay the visual focus of the list. */
 .provider-move {
-  width: 2rem;
-  padding: 0.1rem 0;
+  width: 1.9rem;
+  margin: 0;
+  padding: 0.15rem 0;
   line-height: 1;
-  font-size: 0.75em;
+  font-size: 0.6875rem;
   background: transparent;
   color: var(--pico-muted-color);
   border-color: var(--pico-muted-border-color);
 }
 
-.provider-move:disabled {
-  opacity: 0.35;
+.provider-move:hover:not(:disabled) {
+  background: var(--pico-form-element-background-color);
+  color: var(--pico-color);
 }
 
-/* A source blocked by the privacy mode stays visible but inert, so the mode's
-   effect is legible rather than the list silently getting shorter. */
+.provider-move:disabled {
+  opacity: 0.3;
+}
+
+/* A source blocked by the privacy mode stays visible but inert, so the
+   mode's effect is legible rather than the list silently getting shorter. */
 .provider-row.is-blocked .provider-label {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* ---- Check a picture ------------------------------------------------ */
+
+#test fieldset {
+  margin-bottom: 0;
+}
+
+#profilePicture {
+  margin-top: 1rem;
+  padding: 1rem;
+  justify-content: center;
+}
+
+/* ---- Quality floor -------------------------------------------------- */
+
+:focus-visible {
+  outline: 2px solid var(--pico-primary);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media (max-width: 30rem) {
+  .page {
+    padding: 1.25rem 0.9rem 2rem;
+  }
+
+  .setting-input {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .provider-label {
+    flex-wrap: wrap;
+  }
 }

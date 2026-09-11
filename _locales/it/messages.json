@@ -7,10 +7,6 @@
     "message": "Migliora la tua casella di posta Thunderbird con immagini di profilo automatiche, aggiungendo loghi aziendali o avatar alle email e ai contatti supportando BIMI",
     "description": "Descrizione dell'estensione."
   },
-  "featuresHeader": {
-    "message": "Funzionalità",
-    "description": "Intestazione della sezione delle funzionalità."
-  },
   "contactsIntegrationLabel": {
     "message": "Aggiungi automaticamente una foto del profilo quando salvi un contatto",
     "description": "Etichetta per la casella di controllo dell'integrazione dei contatti."
@@ -22,34 +18,6 @@
   "inboxListDescription": {
     "message": "Abilita questa opzione per mostrare le foto del profilo nella lista della posta in arrivo. (solo per Thunderbird 121+)",
     "description": "Descrizione della funzionalità della lista della posta in arrivo."
-  },
-  "inboxListWarning": {
-    "message": "Avviso: Questa funzionalità è sperimentale e potrebbe non funzionare come previsto. Se riscontri problemi, disabilita questa opzione e segnala il problema.",
-    "description": "Messaggio di avviso per la funzionalità della lista della posta in arrivo."
-  },
-  "inboxListKnownIssues": {
-    "message": "Problemi noti:",
-    "description": "Intestazione per l'elenco dei problemi noti."
-  },
-  "inboxListIssueLaggyScrolling": {
-    "message": "Scorrimento lento",
-    "description": "Problema noto: Scorrimento lento."
-  },
-  "inboxListIssueVisualFlickering": {
-    "message": "Sfarfallio visivo (segnaposto e icone)",
-    "description": "Problema noto: Sfarfallio visivo."
-  },
-  "inboxListIssueSlowFirstLoad": {
-    "message": "Lento durante il primo caricamento",
-    "description": "Problema noto: Lento durante il primo caricamento."
-  },
-  "inboxListIssueBigFolders": {
-    "message": "Difficoltà con cartelle grandi",
-    "description": "Problema noto: Difficoltà con cartelle grandi."
-  },
-  "cacheHeader": {
-    "message": "Cache",
-    "description": "Intestazione della sezione della cache."
   },
   "cacheSizeLabel": {
     "message": "Dimensione:",
