@@ -85,6 +85,25 @@ class SettingsManager {
   async setCacheRefreshNotFoundDays(value) {
     await this.setSetting("cacheRefreshNotFoundDays", value);
   }
+
+  /**
+   * Returns the avatar appearance settings.
+   * @returns {Promise<{shape: string, initialsColor: string}>}
+   */
+  async getAppearance() {
+    return {
+      shape: await this.getSetting("avatarShape"),
+      initialsColor: await this.getSetting("initialsColor"),
+    };
+  }
+
+  async setAvatarShape(value) {
+    await this.setSetting("avatarShape", value);
+  }
+
+  async setInitialsColor(value) {
+    await this.setSetting("initialsColor", value);
+  }
 }
 
 export default SettingsManager;

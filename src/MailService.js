@@ -1,6 +1,5 @@
 import ICAL from "../libs/ical.js";
 import Author from "./Author.js";
-import RecipientInitial from "./RecipientInitial.js";
 
 /**
  * Service for handling mail-related operations.
@@ -46,7 +45,7 @@ class MailService {
     const author = await this.getCorrespondent(message, context);
     let url = await this.avatarService.getAvatar(author);
     if (context === "messageHeader" && !url) {
-      url = RecipientInitial.buildInitials(author);
+      url = await this.avatarService.buildInitials(author);
     }
     return { [author.getEmail()]: url };
   }

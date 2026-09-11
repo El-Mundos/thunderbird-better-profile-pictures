@@ -39,15 +39,29 @@ export default class RecipientInitial {
   }
 
   /**
+   * A single muted tone for every correspondent, for people who find the
+   * per-sender colours noisy in a long message list.
+   * @returns {string} light-dark() colour string.
+   */
+  static getNeutralColor() {
+    return "light-dark(oklch(0.88 0 0), oklch(0.42 0 0))";
+  }
+
+  /**
    * Builds initials for the given author.
    * @param {Author} author - The author object.
+   * @param {string} [colorMode="auto"] - "auto" derives a colour from the
+   *   address so a given sender always looks the same; "neutral" uses one grey.
    * @returns {Object} - The initials object.
    */
-  static buildInitials(author) {
+  static buildInitials(author, colorMode = "auto") {
     const identifier = author.getEmail() || author.getAuthor() || "";
     return {
       value: `//INITIAL:${author.getInitials()}`,
-      color: RecipientInitial.getColor(identifier),
+      color:
+        colorMode === "neutral"
+          ? RecipientInitial.getNeutralColor()
+          : RecipientInitial.getColor(identifier),
       identifier,
     };
   }

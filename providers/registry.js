@@ -106,6 +106,25 @@ export function getProviderDescriptor(id) {
 }
 
 /**
+ * Corner radius for each avatar shape, as a CSS length.
+ * @enum {string}
+ */
+export const AVATAR_SHAPE_RADIUS = {
+  circle: "50%",
+  rounded: "6px",
+  square: "0",
+};
+
+/**
+ * Resolves a shape name to its radius, falling back to a circle.
+ * @param {string} shape
+ * @returns {string} CSS radius.
+ */
+export function shapeToRadius(shape) {
+  return AVATAR_SHAPE_RADIUS[shape] ?? AVATAR_SHAPE_RADIUS.circle;
+}
+
+/**
  * Privacy modes, in increasing order of strictness.
  *
  * OFF      - every enabled provider runs; current behaviour.

@@ -1,6 +1,7 @@
 import SettingsManager from "../settings/SettingsManager.js";
 import defaultSettings from "../settings/defaultSettings.js";
 import Author from "./Author.js";
+import RecipientInitial from "./RecipientInitial.js";
 import CacheStorage from "./CacheStorage.js";
 import ProfilePictureFetcher, { daysToMs } from "./ProfilePictureFetcher.js";
 
@@ -40,6 +41,43 @@ export default class AvatarService {
      * @type {{refreshFoundMs: number, refreshNotFoundMs: number}|null}
      */
     this.cacheRefresh = null;
+    /**
+     * Avatar appearance settings.
+     * @type {{shape: string, initialsColor: string}|null}
+     */
+    this.appearance = null;
+  }
+
+  /**
+   * Returns the avatar appearance settings, loading them on first use.
+   * @returns {Promise<{shape: string, initialsColor: string}>}
+   */
+  async getAppearance() {
+    if (this.appearance === null) {
+      try {
+        this.appearance = await this.settingsManager.getAppearance();
+      } catch (error) {
+        console.error("Error loading appearance, using defaults", error);
+        this.appearance = {
+          shape: defaultSettings.avatarShape,
+          initialsColor: defaultSettings.initialsColor,
+        };
+      }
+    }
+    return this.appearance;
+  }
+
+  /**
+   * Builds initials for an author using the configured colour mode.
+   *
+   * Callers go through here rather than RecipientInitial directly, so the
+   * setting is applied in one place and cannot be forgotten at a call site.
+   * @param {Author} author
+   * @returns {Promise<Object>} Initials payload.
+   */
+  async buildInitials(author) {
+    const { initialsColor } = await this.getAppearance();
+    return RecipientInitial.buildInitials(author, initialsColor);
   }
 
   /**
@@ -116,6 +154,7 @@ export default class AvatarService {
     this.providerList = null;
     this.privacyMode = null;
     this.cacheRefresh = null;
+    this.appearance = null;
     this.sessionCacheAvatarUrls.clear();
     this.pendingPromises.clear();
   }

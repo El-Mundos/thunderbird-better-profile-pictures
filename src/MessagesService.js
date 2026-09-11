@@ -1,6 +1,6 @@
+import { shapeToRadius } from "../providers/registry.js";
 import defaultSettings from "../settings/defaultSettings.js";
 import Author from "./Author.js";
-import RecipientInitial from "./RecipientInitial.js";
 
 /**
  * Service for handling messages and their associated avatars.
@@ -84,7 +84,7 @@ class MessagesService {
           return;
         }
 
-        urls[author] = RecipientInitial.buildInitials(author);
+        urls[author] = await this.avatarService.buildInitials(author);
       },
     );
 
@@ -106,7 +106,7 @@ class MessagesService {
 
     await Promise.all(
       Array.from(messagesAuthorsSet).map(async (author) => {
-        initials[author] = RecipientInitial.buildInitials(author);
+        initials[author] = await this.avatarService.buildInitials(author);
       }),
     );
 
@@ -479,6 +479,14 @@ class MessagesService {
   async displayVisibleRows(currentProcessId, tab) {
     const tabId = await this.getMailTabId(tab);
 
+    // Push the configured shape before painting. Cheap (two property writes)
+    // and it keeps windows opened after a settings change in step.
+    const { shape } = await this.avatarService.getAppearance();
+    await browser.headerApi.setAvatarStyle(
+      tabId,
+      JSON.stringify({ radius: shapeToRadius(shape) }),
+    );
+
     const rows = await browser.headerApi.getVisibleRowMessages(tabId);
     if (currentProcessId !== this.processId) {
       return;
@@ -531,7 +539,7 @@ class MessagesService {
         } catch (_e) {
           // Fall through to initials.
         }
-        urls[index] = RecipientInitial.buildInitials(author);
+        urls[index] = await this.avatarService.buildInitials(author);
       }),
     );
 

@@ -185,5 +185,32 @@
   },
   "cacheIntervalNever": {
     "message": "Nunca"
+  },
+  "appearanceStyleHeader": {
+    "message": "Aspecto"
+  },
+  "avatarShapeLabel": {
+    "message": "Forma de la imagen"
+  },
+  "avatarShapeCircle": {
+    "message": "Círculo"
+  },
+  "avatarShapeRounded": {
+    "message": "Cuadrado redondeado"
+  },
+  "avatarShapeSquare": {
+    "message": "Cuadrado"
+  },
+  "initialsColorLabel": {
+    "message": "Color de las iniciales"
+  },
+  "initialsColorAuto": {
+    "message": "Uno por remitente"
+  },
+  "initialsColorNeutral": {
+    "message": "El mismo gris para todos"
+  },
+  "initialsColorHelp": {
+    "message": "Las iniciales se muestran cuando no se encuentra ninguna imagen. Un color por remitente facilita distinguirlos; un solo gris hace la lista más tranquila."
   }
 }

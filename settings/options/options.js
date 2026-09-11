@@ -17,6 +17,8 @@ const contactsIntegrationCheckbox = document.getElementById(
 );
 const providerListElement = document.getElementById("providerList");
 const privacyModeSelect = document.getElementById("privacyMode");
+const avatarShapeSelect = document.getElementById("avatarShape");
+const initialsColorSelect = document.getElementById("initialsColor");
 const cacheFoundSelect = document.getElementById("cacheRefreshFound");
 const cacheNotFoundSelect = document.getElementById("cacheRefreshNotFound");
 const privacyModeHint = document.getElementById("privacyModeHint");
@@ -325,6 +327,24 @@ async function printCacheSize(domElement) {
   domElement.textContent = size + iconsText;
 }
 
+async function initAppearance() {
+  const { shape, initialsColor } = await settingsManager.getAppearance();
+  avatarShapeSelect.value = shape;
+  initialsColorSelect.value = initialsColor;
+}
+
+async function setAvatarShape() {
+  await settingsManager.setAvatarShape(avatarShapeSelect.value);
+  browser.runtime.sendMessage({ action: "refreshSettings" });
+  browser.runtime.sendMessage({ action: "displayInboxList" });
+}
+
+async function setInitialsColor() {
+  await settingsManager.setInitialsColor(initialsColorSelect.value);
+  browser.runtime.sendMessage({ action: "refreshSettings" });
+  browser.runtime.sendMessage({ action: "displayInboxList" });
+}
+
 async function initCacheRefresh() {
   const { foundDays, notFoundDays } = await settingsManager.getCacheRefreshDays();
   cacheFoundSelect.value = String(foundDays);
@@ -455,6 +475,7 @@ function setupLocalization() {
 async function initialize() {
   await printCacheSize(cacheSizeElement);
   await initProviders();
+  await initAppearance();
   await initCacheRefresh();
   initOptions();
   clearCacheButton.addEventListener("click", clearCache);
@@ -464,6 +485,8 @@ async function initialize() {
     setContactsIntegration,
   );
   privacyModeSelect.addEventListener("change", setPrivacyMode);
+  avatarShapeSelect.addEventListener("change", setAvatarShape);
+  initialsColorSelect.addEventListener("change", setInitialsColor);
   cacheFoundSelect.addEventListener("change", setCacheRefreshFound);
   cacheNotFoundSelect.addEventListener("change", setCacheRefreshNotFound);
   fetchButton.addEventListener("click", fetchProfilePicture);

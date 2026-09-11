@@ -34,6 +34,32 @@
       </div>
     </section>
 
+    <section class="group" id="appearance">
+      <h2 class="group-title" data-l10n-id="appearanceStyleHeader">Appearance</h2>
+
+      <div class="setting">
+        <div class="setting-row">
+          <label class="setting-name" for="avatarShape" data-l10n-id="avatarShapeLabel">Picture shape</label>
+          <select id="avatarShape" name="avatarShape" class="setting-input">
+            <option value="circle" data-l10n-id="avatarShapeCircle">Circle</option>
+            <option value="rounded" data-l10n-id="avatarShapeRounded">Rounded square</option>
+            <option value="square" data-l10n-id="avatarShapeSquare">Square</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="setting">
+        <div class="setting-row">
+          <label class="setting-name" for="initialsColor" data-l10n-id="initialsColorLabel">Colour for initials</label>
+          <select id="initialsColor" name="initialsColor" class="setting-input">
+            <option value="auto" data-l10n-id="initialsColorAuto">One per sender</option>
+            <option value="neutral" data-l10n-id="initialsColorNeutral">Same grey for everyone</option>
+          </select>
+        </div>
+        <p class="setting-help" data-l10n-id="initialsColorHelp">Initials are shown when no picture is found. A colour per sender makes them easier to tell apart; one grey keeps a long list calmer.</p>
+      </div>
+    </section>
+
     <section class="group" id="privacy">
       <h2 class="group-title" data-l10n-id="privacyHeader">Privacy</h2>
 
