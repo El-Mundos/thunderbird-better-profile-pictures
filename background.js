@@ -97,8 +97,12 @@ async function displayInboxList(tab) {
 function initListeners() {
   browser.messageDisplay.onMessageDisplayed.addListener(
     async (tab, message) => {
+      // Decorate the opened message's header only. The inbox list is already
+      // decorated and is kept in sync by folder-change / DOM-list events, so we
+      // deliberately do NOT trigger a full inbox-list re-scan on every message
+      // open — that was re-scanning the whole (potentially huge) folder on
+      // every click.
       displayInTab(tab, [message]);
-      displayInboxList(tab);
     },
   );
 
