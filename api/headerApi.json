@@ -88,6 +88,35 @@
         ]
       },
       {
+        "name": "getVisibleRowMessages",
+        "type": "function",
+        "async": true,
+        "parameters": [
+          {
+            "type": "integer",
+            "name": "tabId",
+            "optional": true
+          }
+        ]
+      },
+      {
+        "name": "paintRowAvatars",
+        "type": "function",
+        "async": true,
+        "parameters": [
+          {
+            "type": "integer",
+            "name": "tabId",
+            "optional": true
+          },
+          {
+            "type": "string",
+            "name": "urls",
+            "optional": true
+          }
+        ]
+      },
+      {
         "name": "installEventListeners",
         "type": "function",
         "async": true,
