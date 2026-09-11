@@ -156,5 +156,41 @@
   "providerMoveDown": {
     "message": "Move down",
     "description": "Tooltip for the reorder-down button."
+  },
+  "privacyHeader": {
+    "message": "Privacy",
+    "description": "Header for the privacy section."
+  },
+  "privacyModeLabel": {
+    "message": "Look up pictures online",
+    "description": "Label for the privacy mode selector."
+  },
+  "privacyModeOff": {
+    "message": "Use every enabled source",
+    "description": "Privacy mode: no restriction."
+  },
+  "privacyModeBalanced": {
+    "message": "Only the sender's own DNS records",
+    "description": "Privacy mode: DNS-backed lookups only."
+  },
+  "privacyModeStrict": {
+    "message": "Never — offline only",
+    "description": "Privacy mode: no network lookups."
+  },
+  "privacyModeOffHint": {
+    "message": "Every source you enable below may be contacted. Outside services will learn the domains, and in some cases the addresses, of people who write to you.",
+    "description": "Explanation of the off mode."
+  },
+  "privacyModeBalancedHint": {
+    "message": "Only BIMI is used: a DNS lookup against the sender's own domain. No outside service is contacted, and no request is made to the sender's website. Fewer pictures will be found.",
+    "description": "Explanation of the balanced mode."
+  },
+  "privacyModeStrictHint": {
+    "message": "No pictures are looked up online. Only address book photos, pictures already cached, and generated initials are shown.",
+    "description": "Explanation of the strict mode."
+  },
+  "providerBadgeBlocked": {
+    "message": "blocked",
+    "description": "Badge marking a source disabled by the current privacy mode."
   }
 }

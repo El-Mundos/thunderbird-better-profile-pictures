@@ -1,4 +1,7 @@
-import { reconcileProviderList } from "../providers/registry.js";
+import {
+  PrivacyMode,
+  reconcileProviderList,
+} from "../providers/registry.js";
 import defaultSettings from "./defaultSettings.js";
 
 class SettingsManager {
@@ -46,6 +49,22 @@ class SettingsManager {
 
   async setProviders(value) {
     await this.setSetting("providers", reconcileProviderList(value));
+  }
+
+  /**
+   * Returns the active privacy mode, falling back to the default if storage
+   * holds a value from a release that defined different modes.
+   * @returns {Promise<string>} A PrivacyMode value.
+   */
+  async getPrivacyMode() {
+    const mode = await this.getSetting("privacyMode");
+    return Object.values(PrivacyMode).includes(mode)
+      ? mode
+      : defaultSettings.privacyMode;
+  }
+
+  async setPrivacyMode(value) {
+    await this.setSetting("privacyMode", value);
   }
 }
 

@@ -1,6 +1,8 @@
 import defaultSettings from "../settings/defaultSettings.js";
 import ProviderFactory from "../providers/ProviderFactory.js";
 import {
+  PrivacyMode,
+  filterProvidersForPrivacy,
   getProviderDescriptor,
   reconcileProviderList,
 } from "../providers/registry.js";
@@ -26,6 +28,7 @@ export default class ProfilePictureFetcher {
     providerName = "duckduckgo",
     disableCache = false,
     providerList = null,
+    privacyMode = PrivacyMode.OFF,
   ) {
     this.wdow = wdow;
     this.author = authorObject;
@@ -36,8 +39,13 @@ export default class ProfilePictureFetcher {
     // Resolved provider chain, in lookup order. Reconciled against the registry
     // so a stored list from an older release can't reference a provider that no
     // longer exists.
-    this.providerList = reconcileProviderList(
-      providerList ?? defaultSettings.providers,
+    // Privacy filtering is applied here, at the single point where the chain is
+    // turned into lookups, so no caller can bypass it by constructing a fetcher
+    // directly.
+    this.privacyMode = privacyMode;
+    this.providerList = filterProvidersForPrivacy(
+      reconcileProviderList(providerList ?? defaultSettings.providers),
+      privacyMode,
     );
     // Providers are constructed lazily: building all eight up front meant
     // instantiating scrapers that the configured chain never consults.
