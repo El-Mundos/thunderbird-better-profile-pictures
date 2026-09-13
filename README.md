@@ -74,7 +74,9 @@ matches or removes the other's elements. You will still get two avatars in the
 same place, because both insert into Thunderbird's own `.recipient-avatar`
 container, so removing the original is still the sensible thing to do.
 
-Requires Thunderbird 112 or later. Confirmed working on 154.
+Requires Thunderbird 112 or later, and is capped at 154 because experiment APIs
+track Thunderbird's internals and break on its release cycle. Confirmed working
+on 154.
 
 ## Provenance
 
