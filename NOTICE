@@ -26,9 +26,10 @@ Third-party components
 ----------------------
 
 libs/ical.js
-    A minified build of ICAL.js, used to parse vCards from the address book.
-    Licensed under the Mozilla Public License, v. 2.0. The upstream header
-    was stripped by minification before this fork; it is restated here.
+    ICAL.js 2.2.1, used to parse vCards from the address book. This is the
+    official dist build, shipped unmodified, with its upstream MPL header
+    intact. Licensed under the Mozilla Public License, v. 2.0.
+    Copyright (c) Philipp Kewisch.
     https://github.com/kewisch/ical.js
 
 settings/options/style.css
