@@ -3,8 +3,8 @@
   "name": "__MSG_extensionName__",
   "version": "2.5.1",
   "description": "__MSG_extensionDescription__",
-  "author": "Noam SCHMITT",
-  "homepage_url": "https://astucesweb.fr/projets/auto-profile-picture/",
+  "author": "Kalos Tech",
+  "homepage_url": "https://kalostech.es/",
   "icons": {
     "128": "images/icon.svg",
     "96": "images/icon.svg",
@@ -48,7 +48,7 @@
   },
   "browser_specific_settings": {
     "gecko": {
-      "id": "autoprofilepicture@astucesweb.fr",
+      "id": "better-profile-pictures@kalostech.es",
       "strict_min_version": "155.0"
     }
   }

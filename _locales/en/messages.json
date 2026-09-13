@@ -1,10 +1,10 @@
 {
   "extensionName": {
-    "message": "Auto Profile Picture",
+    "message": "Better Profile Pictures",
     "description": "Name of the extension."
   },
   "extensionDescription": {
-    "message": "Enhance your Thunderbird inbox with automated profile images, adding company logos or avatars to emails and contacts while supporting BIMI",
+    "message": "Show a picture for every sender in Thunderbird. Choose your picture sources, control what each lookup reveals, and set per-sender rules.",
     "description": "Description of the extension."
   },
   "appearanceHeader": {

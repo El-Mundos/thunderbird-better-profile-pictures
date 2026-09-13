@@ -1,0 +1,37 @@
+Better Profile Pictures
+=======================
+
+Copyright (c) 2026 Sergio Tabernero Hernández (Kalos Tech)
+Licensed under the Mozilla Public License, v. 2.0. See LICENSE for the full
+text, or obtain a copy at https://mozilla.org/MPL/2.0/.
+
+
+Upstream work
+-------------
+
+This add-on is a fork of Auto Profile Picture 2.5.0, by Noam SCHMITT, also
+licensed under the Mozilla Public License, v. 2.0.
+
+    Auto Profile Picture
+    Copyright (c) Noam SCHMITT
+    https://astucesweb.fr/projets/auto-profile-picture/
+
+The fork adds a configurable provider chain, privacy modes for online
+lookups, per-sender rules, user-controlled cache lifetimes, avatar shape and
+initials colour, and a rebuilt settings page. Files carried over from the
+upstream project remain under the same licence.
+
+
+Third-party components
+----------------------
+
+libs/ical.js
+    A minified build of ICAL.js, used to parse vCards from the address book.
+    Licensed under the Mozilla Public License, v. 2.0. The upstream header
+    was stripped by minification before this fork; it is restated here.
+    https://github.com/kewisch/ical.js
+
+settings/options/style.css
+    Includes a vendored subset of Pico CSS, licensed under the MIT Licence.
+    The vendored subset carries no copyright comment; it is restated here.
+    https://github.com/picocss/pico
