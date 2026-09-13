@@ -1,10 +1,10 @@
 {
   "extensionName": {
-    "message": "Foto de perfil automática",
+    "message": "Fotos de perfil mejoradas",
     "description": "Nombre de la extensión."
   },
   "extensionDescription": {
-    "message": "Mejora tu bandeja de entrada de Thunderbird con imágenes de perfil automáticas, añadiendo logotipos de empresas o avatares a correos electrónicos y contactos, y soportando BIMI",
+    "message": "Muestra una foto de cada remitente en Thunderbird. Elige las fuentes, controla qué revela cada consulta y define reglas por remitente.",
     "description": "Descripción de la extensión."
   },
   "appearanceHeader": {

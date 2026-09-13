@@ -164,7 +164,7 @@ function createAvatarCanvas(doc, size, borderRadius = "50%") {
 function createAvatarImage(doc, url, attrs = {}) {
   const img = markAvatarElement(doc.createElement("img"));
   img.src = url;
-  img.alt = attrs.alt || "Auto Profile Picture";
+  img.alt = attrs.alt || "Profile picture";
   for (const [attr, value] of Object.entries(attrs)) {
     if (attr === "alt") {
       continue;
