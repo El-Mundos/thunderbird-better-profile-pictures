@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "__MSG_extensionName__",
-  "version": "2.5.1",
+  "version": "2.6.0",
   "description": "__MSG_extensionDescription__",
   "author": "Kalos Tech",
   "homepage_url": "https://kalostech.es/",
