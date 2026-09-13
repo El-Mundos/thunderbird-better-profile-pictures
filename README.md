@@ -1,95 +1,97 @@
-<div align="center">
-<a href="https://addons.thunderbird.net/thunderbird/addon/auto-profile-picture/">
-<img src="images/icon.svg" alt="Logo" width="80" height="80">
-</a>
-<h3 align="center">Auto Profile Picture</h3>
-<h4 align="center">Mozilla Thunderbird Add-on</h4>
-<p align="center">
-Upgrade your Thunderbird experience with intelligent sender visualization that transforms how you identify and manage emails.
-<br/>
-<br/>
-<a href="https://addons.thunderbird.net/thunderbird/addon/auto-profile-picture/"><strong>Install on the official Thunderbird add-ons website »</strong></a>
-</p>
-</div>
+# Better Profile Pictures
 
-![Daily users](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Faddons.thunderbird.net%2Fapi%2Fv4%2Faddons%2Faddon%2Fauto-profile-picture%2F&query=%24.average_daily_users&label=daily%20users&color=%2300b294&cacheSeconds=604800&logo=thunderbird&logoColor=%23ffffff)
-![Latest version on the Thunderbird marketplace](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Faddons.thunderbird.net%2Fapi%2Fv4%2Faddons%2Faddon%2Fauto-profile-picture%2F&query=%24.current_version.version&label=latest%20version&logo=thunderbird&logoColor=%23ffffff)
-![GitHub Release](https://img.shields.io/github/v/release/noam-sc/thunderbird-auto-profile-picture?label=github%20release&logo=github)
+A Thunderbird add-on that shows a picture for every sender — in the message
+header, and optionally in the inbox list.
 
-## About The Extension
+It is a fork of [Auto Profile Picture][upstream] 2.5.0 by Noam SCHMITT, rebuilt
+around two things the original struggled with: **speed on large folders**, and
+**control over what gets sent to third parties** when a picture is looked up
+online.
 
-![Preview in message header](images/screen.webp)
+[upstream]: https://astucesweb.fr/projets/auto-profile-picture/
 
-Upgrade your inbox with clearer, more recognizable sender visuals — making email management smoother and more intuitive.
+## Why this fork exists
 
-- **Automated Profile Images**: Replaces default grey sender icons with their **company logos** or **Gravatar avatars** for a more organized and professional inbox. 🏢
-- **Automatic Contact Pictures**: Automatically assigns a profile picture to contacts when you save them without a photo, simplifying your contact list management. 👥✨
-- **Inbox & Message Header Customization**: Adds profile images to both your **inbox list** and **message headers**, improving sender recognition at a glance. 📧🖼️
-- **BIMI Support**: Supports **Brand Indicators for Message Identification (BIMI)**, displaying official logos from companies. ✅🔒
-- **Streamlined Interface**: Delivers a cleaner, more efficient email experience with instant visual identification of senders. 🖥️✨
-- Compatible with Thunderbird extension Thunderbird Conversations
+The original add-on is a good idea with a performance problem: it re-scanned
+the whole inbox list on every message open, walked rows without a ceiling, and
+re-resolved the same correspondent repeatedly. On a folder with a few thousand
+messages that turns into a visibly unresponsive Thunderbird.
 
-![Preview in inbox list](images/inboxList_square.webp)
+Noam's repository went offline while his GitHub account was suspended, so the
+fixes had nowhere to go upstream. He was asked first and was happy for the work
+to be forked and would like it merged back when he is able to.
 
-## Installation
+## What changed
 
-Official installation (requires Internet access) from [Thunderbird Add-on site](https://addons.thunderbird.net/):
+**Performance**
 
-- Download and install [Auto Profile Picture](https://addons.thunderbird.net/thunderbird/addon/auto-profile-picture/) via the `Add-ons Manager`.
-- From the [Thunderbird Menu Bar](https://support.mozilla.org/en-US/kb/display-thunderbird-menus-and-toolbar), select `Add-ons and Themes` to open the menu.
-- In the search field, type `Auto Profile Picture` and press `Enter`.
-- Click on the `+ Add to Thunderbird` button, then click `Add` on the confirmation dialog to confirm.
+- The inbox list is no longer re-scanned on every message open.
+- Avatars render from the viewport only, instead of the entire row set.
+- Hard ceilings on rows walked per pass, so a large folder cannot stall the UI.
+- Correspondent resolution is memoized per message.
+- Recycled rows repaint from a main-process cache rather than refetching.
+- Fixed a runaway folder scan triggered when `firstDisplayedMessageId` was NaN.
 
-Install (with or without Internet access) the XPI file directly:
+**Privacy**
 
-- Download [GitHub XPI version](https://github.com/noam-sc/thunderbird-auto-profile-picture/releases/latest) via the `Add-ons Manager`.
-- From the [Thunderbird Menu Bar](https://support.mozilla.org/en-US/kb/display-thunderbird-menus-and-toolbar), select `Add-ons and Themes` to open the menu.
-- Click the gear icon and choose `Install Add-on From File…`
-- Choose the downloaded XPI file, and click `Add`.
+- Online lookups are opt-in and configurable, not implicit.
+- Libravatar and the favicon-webpage fallback were dropped from the default
+  chains. The latter downloaded a sender's whole homepage just to hunt for a
+  `<link rel="icon">` tag — a lot of traffic, and an odd thing to do given an
+  icon reads as a trust signal.
 
-## Support this project
+**Features**
 
-If you find this project useful, please consider supporting it by:
+- A configurable provider chain, so you choose which sources are tried and in
+  what order.
+- Per-sender rules to pin a specific picture or hide one entirely.
+- Cache lifetimes you set yourself, for both hits and misses.
+- Picture shape and initials colour.
+- A rebuilt settings page.
 
-- 📝 [Writing a review](https://addons.thunderbird.net/thunderbird/addon/auto-profile-picture/reviews/) on the Thunderbird Add-ons website (ATN)
-- ⭐️ Giving a Star on the GitHub repository.
-- Contribute to the project by reporting bugs, suggesting new features, or submitting pull requests.
+## Install
 
-If you encounter any problem, please issue a bug report. If you have ideas for additional features, please issue a feature request.
+No signed release is published yet. Build the `.xpi` yourself:
 
-## Contributing
+```bash
+git clone https://github.com/El-Mundos/thunderbird-better-profile-pictures
+cd thunderbird-better-profile-pictures
+./build.sh
+```
 
-Use this section to get started on developing this addon locally. Any contributions you make are **greatly appreciated**.
+That writes `dist/better_profile_pictures-<version>.xpi`. In Thunderbird, go to
+**Add-ons and Themes → the gear icon → Install Add-on From File**, and pick it.
 
-If you have a suggestion that would make this better, please fork the repo and create a pull request. You can also simply open an issue with the tag "enhancement".
+The build is reproducible: it packages from `git ls-files`, sorted, with fixed
+timestamps and `zip -X`, so two builds of the same tree are byte-identical.
 
-### Prerequisites
+**Do not run this alongside the original Auto Profile Picture.** The two share
+DOM class names and both watch them with a MutationObserver, so each one's
+writes retrigger the other's. Remove the original first. Settings and cache do
+not carry over — this is a separate add-on with its own ID.
 
-- Mozilla Thunderbird
-- Git
+Requires Thunderbird 112 or later. Confirmed working on 154.
 
-### Installation
+## Provenance
 
-- [Clone](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) this Git repository
-- In Thunderbird Add-ons settings page, click on the gear icon
-- Choose `Debug Add-ons`
-- Click on `Load Temporary Add-on...`
-- Select the `manifest.json` file at the root of this repository
+`auto_profile_picture-2.5.0-tb.xpi` and `auto_profile_picture-2.5.1-fast.xpi`
+are kept in the repository on purpose. The first is the pristine upstream
+release this fork started from; the second is the build the early performance
+work reproduced byte-for-byte, which is what makes the history auditable rather
+than merely plausible.
 
-### Tests
+The commit history is intact from that 2.5.0 import onward, and every commit
+message carries its reasoning.
 
-- Run `npm install` to install the dependencies
-- Run `npm run test` to run the tests
+## Licence
 
-## License
+Mozilla Public License 2.0 — see [LICENSE](LICENSE).
 
-Distributed under the MPL 2.0 License. See [MPL 2.0 License](https://opensource.org/license/mpl-2-0) for more information.
+Upstream work is Copyright (c) Noam SCHMITT, under the same licence. See
+[NOTICE](NOTICE) for attribution, including two third-party components whose
+headers were lost before this fork: `libs/ical.js` (a minified build of
+[ICAL.js][icaljs], MPL-2.0) and the vendored [Pico CSS][pico] subset in the
+settings stylesheet (MIT).
 
-## Credits
-
-This add-on relies on some open sourced projects
-
-- [Mozilla Thunderbird](https://www.thunderbird.net/)
-- [ICAL.js](https://github.com/kewisch/ical.js)
-- Extension contacts part: Auto Avatar extension by Seth Falco
-- Extension icon: Iconsax Duotone Filled Icons collection by Iconsax
+[icaljs]: https://github.com/kewisch/ical.js
+[pico]: https://github.com/picocss/pico
