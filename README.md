@@ -65,10 +65,14 @@ That writes `dist/better_profile_pictures-<version>.xpi`. In Thunderbird, go to
 The build is reproducible: it packages from `git ls-files`, sorted, with fixed
 timestamps and `zip -X`, so two builds of the same tree are byte-identical.
 
-**Do not run this alongside the original Auto Profile Picture.** The two share
-DOM class names and both watch them with a MutationObserver, so each one's
-writes retrigger the other's. Remove the original first. Settings and cache do
-not carry over — this is a separate add-on with its own ID.
+Settings and cache do not carry over from the original — this is a separate
+add-on with its own ID, so it installs alongside rather than upgrading.
+
+Running it next to the original Auto Profile Picture no longer breaks anything:
+every class, dataset key and element id is namespaced, so neither add-on
+matches or removes the other's elements. You will still get two avatars in the
+same place, because both insert into Thunderbird's own `.recipient-avatar`
+container, so removing the original is still the sensible thing to do.
 
 Requires Thunderbird 112 or later. Confirmed working on 154.
 
