@@ -126,16 +126,16 @@ function getThunderbirdVersion() {
   }
 }
 
-const AVATAR_CLASS = "autoprofilepicture-item";
-const AVATAR_DATA_QUERY = `[data-auto-profile-picture="true"], .${AVATAR_CLASS}, .autoprofilepictureimg`;
+const AVATAR_CLASS = "betterprofilepictures-item";
+const AVATAR_DATA_QUERY = `[data-better-profile-pictures="true"], .${AVATAR_CLASS}`;
 const SVG_DATA_PREFIX = "data:image/svg+xml";
 const DEFAULT_FALLBACK_ICON =
   "chrome://messenger/skin/addressbook/icons/contact-generic.svg";
 const INITIALS_PREFIX = "//INITIAL:";
 const DATA_URL_REGEX = /^data:([^;,]+)(;base64)?,(.*)$/;
-const ROW_AVATAR_REFERENCE = Symbol("autoProfilePictureRowAvatar");
-const RECIPIENT_AVATAR_OWNER = "auto-profile-picture";
-const EXTENSION_AVATAR_SELECTOR = `.recipient-avatar[data-auto-profile-picture-owner="${RECIPIENT_AVATAR_OWNER}"]`;
+const ROW_AVATAR_REFERENCE = Symbol("betterProfilePicturesRowAvatar");
+const RECIPIENT_AVATAR_OWNER = "better-profile-pictures";
+const EXTENSION_AVATAR_SELECTOR = `.recipient-avatar[data-better-profile-pictures-owner="${RECIPIENT_AVATAR_OWNER}"]`;
 
 function hasInitialsValue(value) {
   return typeof value === "string" && value.includes(INITIALS_PREFIX);
@@ -147,7 +147,7 @@ function extractInitials(value) {
 
 function markAvatarElement(element) {
   element.classList.add(AVATAR_CLASS);
-  element.dataset.autoProfilePicture = "true";
+  element.dataset.betterProfilePictures = "true";
   return element;
 }
 
@@ -201,7 +201,7 @@ function getExtensionRecipientAvatar(row) {
 
 function ensureAvatarOwnership(element) {
   if (element) {
-    element.dataset.autoProfilePictureOwner = RECIPIENT_AVATAR_OWNER;
+    element.dataset.betterProfilePicturesOwner = RECIPIENT_AVATAR_OWNER;
   }
   return element;
 }
@@ -336,16 +336,16 @@ function rememberAvatarMetadata(
     return;
   }
   if (identifier) {
-    element.dataset.autoProfilePictureIdentifier = identifier;
+    element.dataset.betterProfilePicturesIdentifier = identifier;
   } else {
-    delete element.dataset.autoProfilePictureIdentifier;
+    delete element.dataset.betterProfilePicturesIdentifier;
   }
-  element.dataset.autoProfilePictureType = type;
-  element.dataset.autoProfilePictureValue = value || "";
+  element.dataset.betterProfilePicturesType = type;
+  element.dataset.betterProfilePicturesValue = value || "";
   if (color) {
-    element.dataset.autoProfilePictureColor = color;
+    element.dataset.betterProfilePicturesColor = color;
   } else {
-    delete element.dataset.autoProfilePictureColor;
+    delete element.dataset.betterProfilePicturesColor;
   }
 }
 
@@ -357,12 +357,12 @@ function shouldSkipAvatarUpdate(
     return false;
   }
   const { dataset } = element;
-  if (dataset.autoProfilePictureIdentifier !== identifier) {
+  if (dataset.betterProfilePicturesIdentifier !== identifier) {
     return false;
   }
-  const currentType = dataset.autoProfilePictureType;
-  const currentValue = dataset.autoProfilePictureValue;
-  const currentColor = dataset.autoProfilePictureColor || "";
+  const currentType = dataset.betterProfilePicturesType;
+  const currentValue = dataset.betterProfilePicturesValue;
+  const currentColor = dataset.betterProfilePicturesColor || "";
 
   if (type === "initials") {
     if (currentType === "image") {
@@ -492,9 +492,9 @@ async function installConversation(window, payload) {
 
   async function replaceAuthorPictureInMessage(message, url) {
     if (!url || url === "") {
-      const wrongInitials = message.querySelector("abbr.auto-profile-picture");
+      const wrongInitials = message.querySelector("abbr.better-profile-pictures");
       if (wrongInitials) {
-        wrongInitials.classList.remove("auto-profile-picture");
+        wrongInitials.classList.remove("better-profile-pictures");
         wrongInitials.classList.add("contactInitials");
         removeAvatarElements(wrongInitials);
         if (!useCanvas) {
@@ -507,11 +507,11 @@ async function installConversation(window, payload) {
     if (useCanvas) {
       const targetElement =
         message.querySelector(".contactInitials") ||
-        message.querySelector(".auto-profile-picture");
+        message.querySelector(".better-profile-pictures");
       if (targetElement) {
         targetElement.classList.remove("contactInitials");
         targetElement.classList.add("contactAvatar");
-        targetElement.classList.add("auto-profile-picture");
+        targetElement.classList.add("better-profile-pictures");
         targetElement.textContent = "";
 
         targetElement.style.background = null;
@@ -523,7 +523,7 @@ async function installConversation(window, payload) {
 
         await drawDataUrlToCanvas(url, canvas, 32, 32, window);
       } else {
-        console.error("No contactInitials or auto-profile-picture found");
+        console.error("No contactInitials or better-profile-pictures found");
       }
     } else {
       // TB < 145 and TB 146+: Use background-image approach
@@ -531,22 +531,22 @@ async function installConversation(window, payload) {
       if (contactInitials) {
         contactInitials.classList.remove("contactInitials");
         contactInitials.classList.add("contactAvatar");
-        contactInitials.classList.add("auto-profile-picture");
+        contactInitials.classList.add("better-profile-pictures");
         // Clear background color (oklch) when removing initials
         contactInitials.style.background = null;
         contactInitials.style.backgroundImage = `url("${url}")`;
         contactInitials.textContent = "\u00A0";
       } else {
-        const autoProfilePicture = message.querySelector(
-          ".auto-profile-picture",
+        const avatarElement = message.querySelector(
+          ".better-profile-pictures",
         );
-        if (autoProfilePicture) {
+        if (avatarElement) {
           // Clear background color (oklch) when removing initials
-          autoProfilePicture.style.background = null;
-          autoProfilePicture.style.backgroundImage = `url("${url}")`;
-          autoProfilePicture.textContent = "\u00A0";
+          avatarElement.style.background = null;
+          avatarElement.style.backgroundImage = `url("${url}")`;
+          avatarElement.textContent = "\u00A0";
         } else {
-          console.error("No contactInitials or auto-profile-picture found");
+          console.error("No contactInitials or better-profile-pictures found");
         }
       }
     }
@@ -623,7 +623,7 @@ async function installOnMessageHeader(window, urls) {
   for (const recipientAvatar of recipientAvatars) {
     const hasAvatarClass = recipientAvatar.classList.contains("has-avatar");
     const isExtensionAvatar = Boolean(
-      recipientAvatar.dataset.autoProfilePictureIdentifier,
+      recipientAvatar.dataset.betterProfilePicturesIdentifier,
     );
     if (hasAvatarClass && !isExtensionAvatar) {
       result = { status: "success" };
@@ -658,8 +658,8 @@ async function installOnMessageHeader(window, urls) {
         contactInitials = document.createElement("span");
       }
       contactInitials.classList.add("contactInitials");
-      contactInitials.classList.add("auto-profile-picture");
-      contactInitials.dataset.autoProfilePicture = "true";
+      contactInitials.classList.add("better-profile-pictures");
+      contactInitials.dataset.betterProfilePictures = "true";
       const initials = extractInitials(url);
       if (contactInitials.textContent !== initials) {
         contactInitials.textContent = initials;
@@ -790,7 +790,7 @@ function installCss(window) {
     & svg {
       display: block;
     }
-    & .autoprofilepicture-item {
+    & .betterprofilepictures-item {
       width: 100%;
       height: 100%;
     }
@@ -823,13 +823,13 @@ function installCss(window) {
   // installed once and deduped, so a shape change after that would never reach
   // the page if it lived in the stylesheet text.
   applyAvatarStyle(window);
-  if (document.getElementById("auto-profile-picture-style")) {
+  if (document.getElementById("better-profile-pictures-style")) {
     return;
   }
   const style = document.createElement("style");
 
   style.textContent = avatarCss;
-  style.id = "auto-profile-picture-style";
+  style.id = "better-profile-pictures-style";
   document.head.appendChild(style);
 }
 
@@ -840,7 +840,7 @@ function installCss(window) {
  */
 function uninstallCss(window) {
   const { document } = window;
-  const style = document.getElementById("auto-profile-picture-style");
+  const style = document.getElementById("better-profile-pictures-style");
   if (style) {
     style.remove();
   }
@@ -935,8 +935,8 @@ async function installOnRow(document, urlOrObj, row, temporary) {
         contactInitials = document.createElement("span");
       }
       contactInitials.classList.add("contactInitials");
-      contactInitials.classList.add("auto-profile-picture");
-      contactInitials.dataset.autoProfilePicture = "true";
+      contactInitials.classList.add("better-profile-pictures");
+      contactInitials.dataset.betterProfilePictures = "true";
       if (!recipientAvatar.contains(contactInitials)) {
         recipientAvatar.appendChild(contactInitials);
       }
@@ -998,8 +998,8 @@ async function installOnRow(document, urlOrObj, row, temporary) {
         contactInitials = document.createElement("span");
       }
       contactInitials.classList.add("contactInitials");
-      contactInitials.classList.add("auto-profile-picture");
-      contactInitials.dataset.autoProfilePicture = "true";
+      contactInitials.classList.add("better-profile-pictures");
+      contactInitials.dataset.betterProfilePictures = "true";
       if (!recipientAvatar.contains(contactInitials)) {
         recipientAvatar.appendChild(contactInitials);
       }
@@ -1344,7 +1344,7 @@ function setupEventListeners(threadTree, eventsToListen, window) {
         if (
           mutation.target.classList.contains("recipient-avatar") ||
           mutation.target.classList.contains("contactInitials") ||
-          mutation.target.classList.contains("autoprofilepicture-item")
+          mutation.target.classList.contains("betterprofilepictures-item")
         ) {
           // mutations caused by the extension
           continue;
