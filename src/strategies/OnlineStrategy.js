@@ -17,7 +17,7 @@ export class OnlineStrategy extends AvatarStrategy {
     this.provider = provider;
     this.author = author;
     this.domain =
-      provider.scope === Scope.Domain ? author.getDomain() : author.getEmail();
+      provider.scope === Scope.DOMAIN ? author.getDomain() : author.getEmail();
   }
 
   async fetchAvatar() {
