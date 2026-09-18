@@ -57,14 +57,15 @@ No signed release is published yet. Build the `.xpi` yourself:
 ```bash
 git clone https://github.com/El-Mundos/thunderbird-better-profile-pictures
 cd thunderbird-better-profile-pictures
-./build.sh
+git archive --format=zip -o better_profile_pictures.xpi HEAD
 ```
 
-That writes `dist/better_profile_pictures-<version>.xpi`. In Thunderbird, go to
-**Add-ons and Themes → the gear icon → Install Add-on From File**, and pick it.
+In Thunderbird, go to **Add-ons and Themes → the gear icon → Install Add-on
+From File**, and pick `better_profile_pictures.xpi`.
 
-The build is reproducible: it packages from `git ls-files`, sorted, with fixed
-timestamps and `zip -X`, so two builds of the same tree are byte-identical.
+The package is the committed tree minus the repository's own tooling, tests
+and docs, which `.gitattributes` marks `export-ignore`. Every entry carries the
+commit's timestamp, so building the same commit twice gives the same file.
 
 Settings and cache do not carry over from the original — this is a separate
 add-on with its own ID, so it installs alongside rather than upgrading.
