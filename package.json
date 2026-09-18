@@ -2,7 +2,7 @@
   "devDependencies": {
     "@biomejs/biome": "2.3.14",
     "chai": "^4.5.0",
-    "mocha": "^10.8.2"
+    "mocha": "^11.8.0"
   },
   "scripts": {
     "test": "mocha \"**/*.test.js\"",
