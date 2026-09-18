@@ -8,8 +8,11 @@ import MessagesService from "../../src/MessagesService.js";
  * answers after it. The last pass's listener never resolves, which ends the
  * loop the way a real, quiet inbox list would.
  */
-function setup(passes) {
-  const calls = { paint: [], listen: [], visibleAt: [] };
+function setup(
+  passes,
+  getAvatar = async (author) => `data:${author.getEmail()}`,
+) {
+  const calls = { paint: [], listen: [], visibleAt: [], order: [] };
   let pass = 0;
   globalThis.browser = {
     tabs: { query: async () => [{ id: 7 }] },
@@ -21,10 +24,12 @@ function setup(passes) {
       },
       paintRowAvatars: async (_tabId, json) => {
         calls.paint.push(JSON.parse(json));
+        calls.order.push("paint");
         return { status: "success" };
       },
       installEventListeners: (_tabId, keysJSON) => {
         calls.listen.push(keysJSON);
+        calls.order.push("listen");
         const answer = passes[pass].listener;
         pass++;
         return answer ? Promise.resolve(answer) : new Promise(() => {});
@@ -36,7 +41,7 @@ function setup(passes) {
   };
   const avatarService = {
     getAppearance: async () => ({ shape: "circle" }),
-    getAvatar: async (author) => `data:${author.getEmail()}`,
+    getAvatar,
     buildInitials: async () => ({ value: "XX" }),
   };
   return { service: new MessagesService(mailService, avatarService), calls };
@@ -44,8 +49,10 @@ function setup(passes) {
 
 const row = (index, key, author) => ({ index, key, message: { author } });
 
-/** Lets the pass's chain of awaits run to the listener. */
-const settle = () => new Promise((resolve) => setTimeout(resolve, 20));
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/** Lets a pass's lookups, paint batching and awaits run to the listener. */
+const settle = () => wait(150);
 
 describe("MessagesService.displayInboxList", () => {
   it("keys painted avatars by message, not by row index", async () => {
@@ -95,5 +102,63 @@ describe("MessagesService.displayInboxList", () => {
     await settle();
 
     expect(calls.visibleAt).to.have.length(1);
+    // It runs once the throttle has passed. Waited for here so it does not
+    // run during the next test, against that test's mocks.
+    await wait(service.WAIT_TIME_MS);
+    expect(calls.visibleAt).to.have.length(2);
+  });
+
+  it("paints a row as soon as it resolves, not after the slowest", async () => {
+    const { service, calls } = setup(
+      [{ rows: [row(0, "f:1", "fast@x.org"), row(1, "f:2", "slow@y.org")] }],
+      async (author) => {
+        if (author.getEmail() === "slow@y.org") {
+          await wait(80);
+        }
+        return `data:${author.getEmail()}`;
+      },
+    );
+    service.displayInboxList(null);
+    await settle();
+
+    // Each row is painted once, with its final value.
+    expect(calls.paint.map((payload) => Object.keys(payload))).to.deep.equal([
+      ["f:1"],
+      ["f:2"],
+    ]);
+  });
+
+  it("paints rows that settle together in one call", async () => {
+    const { service, calls } = setup([
+      {
+        rows: [
+          row(0, "f:1", "a@x.org"),
+          row(1, "f:2", "b@y.org"),
+          row(2, "f:3", "c@z.org"),
+        ],
+      },
+    ]);
+    service.displayInboxList(null);
+    await settle();
+
+    expect(calls.paint).to.have.length(1);
+  });
+
+  it("arms the listener only once every row is painted", async () => {
+    const { service, calls } = setup(
+      [{ rows: [row(0, "f:1", "fast@x.org"), row(1, "f:2", "slow@y.org")] }],
+      async (author) => {
+        if (author.getEmail() === "slow@y.org") {
+          await wait(80);
+        }
+        return null;
+      },
+    );
+    service.displayInboxList(null);
+    await settle();
+
+    expect(calls.order).to.deep.equal(["paint", "paint", "listen"]);
+    // No picture found: initials, still painted once per row.
+    expect(calls.paint[1]["f:2"].value).to.equal("XX");
   });
 });

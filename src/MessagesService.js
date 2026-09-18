@@ -11,6 +11,9 @@ class MessagesService {
     this.avatarService = avatarService;
     this.WAIT_TIME_MS = defaultSettings.WAIT_TIME_MS;
     this.SUBBATCH_SIZE = defaultSettings.SUBBATCH_SIZE;
+    // How long a settled avatar waits for others to share its paint. Short
+    // enough to go unnoticed, long enough to gather the cache hits of a pass.
+    this.PAINT_BATCH_MS = 30;
     // Absolute ceiling on how many rows the inbox-list decoration will walk in
     // a single pass. Hard backstop against runaway full-folder scans.
     this.MAX_INBOX_MESSAGES = 300;
@@ -474,13 +477,40 @@ class MessagesService {
   }
 
   /**
+   * Builds the paint payload for one inbox-list row: the avatar if one is
+   * found, otherwise initials.
+   * @param {Author} author - The row's correspondent.
+   * @returns {Promise<Object>} - The payload for paintRowAvatars.
+   */
+  async getRowPayload(author) {
+    const identifier = author.getEmail() || author.getAuthor() || "";
+    try {
+      const url = await this.avatarService.getAvatar(author);
+      if (url && typeof url === "object") {
+        return {
+          value: url.value ?? "",
+          color: url.color ?? null,
+          identifier: url.identifier || identifier,
+        };
+      }
+      if (url) {
+        return { value: url, identifier };
+      }
+    } catch (_e) {
+      // Fall through to initials.
+    }
+    return await this.avatarService.buildInitials(author);
+  }
+
+  /**
    * Viewport-only inbox-list decoration.
    *
    * Instead of walking the whole folder to map avatars to global message
    * offsets, this reads ONLY the rows currently rendered on screen (bounded to
    * ~a few dozen regardless of folder size), resolves their avatars, paints
-   * them, then re-arms a listener so the next scroll / view change repaints the
-   * new set of visible rows. This is what makes big folders fast.
+   * each as it arrives, then re-arms a listener so the next scroll / view
+   * change repaints the new set of visible rows. This is what makes big
+   * folders fast.
    *
    * @param {number} currentProcessId - Guards against overlapping runs.
    * @param {Object} tab - The tab object (may be null).
@@ -522,40 +552,43 @@ class MessagesService {
       return;
     }
 
-    // Single paint per pass: each row gets its final value (avatar if we have
-    // one, otherwise initials). Painting the final state in one shot — rather
-    // than initials-then-avatar — means the paint helper can skip rows whose
-    // value is unchanged, so stable rows never flicker. Only genuinely new or
-    // recycled rows actually mutate the DOM.
-    const urls = {};
+    // Each row is painted as soon as its own lookup settles, so a slow source
+    // delays only the rows waiting on it, not the cached ones beside them. A
+    // row is still painted once, with its final value (the avatar if one is
+    // found, otherwise initials), never initials first and a picture later.
+    // Results settling close together are sent in one paint.
+    let batch = {};
+    let flushTimer = null;
+    let painting = Promise.resolve();
+    const flush = () => {
+      flushTimer = null;
+      const payload = JSON.stringify(batch);
+      batch = {};
+      painting = painting.then(async () => {
+        if (currentProcessId !== this.processId) {
+          return;
+        }
+        try {
+          await browser.headerApi.paintRowAvatars(tabId, payload);
+        } catch (error) {
+          console.warn("Error painting inbox-list avatars:", error);
+        }
+      });
+    };
     await Promise.all(
       resolved.map(async ({ key, author }) => {
-        const identifier = author.getEmail() || author.getAuthor() || "";
-        try {
-          const url = await this.avatarService.getAvatar(author);
-          if (url && typeof url === "object") {
-            urls[key] = {
-              value: url.value ?? "",
-              color: url.color ?? null,
-              identifier: url.identifier || identifier,
-            };
-            return;
-          }
-          if (url) {
-            urls[key] = { value: url, identifier };
-            return;
-          }
-        } catch (_e) {
-          // Fall through to initials.
-        }
-        urls[key] = await this.avatarService.buildInitials(author);
+        // Awaited on its own line: `batch[key] = await ...` would bind the
+        // batch before the lookup, and write into one already sent.
+        const payload = await this.getRowPayload(author);
+        batch[key] = payload;
+        flushTimer ??= setTimeout(flush, this.PAINT_BATCH_MS);
       }),
     );
-
-    if (currentProcessId !== this.processId) {
-      return;
+    if (flushTimer !== null) {
+      clearTimeout(flushTimer);
+      flush();
     }
-    await browser.headerApi.paintRowAvatars(tabId, JSON.stringify(urls));
+    await painting;
 
     // Re-arm: block until the next relevant view change (scroll, folder
     // change, sort, row recycle), then repaint the new visible set. Each pass

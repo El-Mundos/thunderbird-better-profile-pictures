@@ -24,6 +24,7 @@ installs alongside Auto Profile Picture rather than upgrading it.
 - The inbox list is no longer re-scanned on every message open
 - Inbox-list avatars render from the viewport only, with hard ceilings on rows walked per pass
 - Correspondent resolution is memoized per message, and recycled rows repaint from a cache
+- Each inbox-list avatar appears as soon as its own lookup finishes, instead of every row waiting for the slowest one; a row is still painted once, with its final picture or initials
 - Cached pictures and not-found markers expire after a set time
 - Libravatar and the favicon-webpage fallback are no longer in the default lookup chains
 - Classes, dataset keys and element ids are namespaced, so the add-on can run next to Auto Profile Picture

@@ -1731,12 +1731,18 @@ var headerApi = class extends ExtensionCommon.ExtensionAPI {
             cache.set(msgKey, url);
           }
 
+          // Every rendered row with a cached avatar is painted, not only the
+          // ones in this payload. Thunderbird recreates rows while a pass is
+          // running, and one painted by an earlier call would otherwise wait
+          // for the next animation frame to be repainted, which a minimized
+          // window never runs. Unchanged rows are skipped by installOnRow.
           for (const { row, msgKey } of getRenderedMessageRows(threadTree)) {
-            if (!Object.hasOwn(urls, msgKey)) {
+            const url = cache.get(msgKey);
+            if (!url) {
               continue;
             }
             try {
-              await installOnRow(window.document, urls[msgKey], row, false);
+              await installOnRow(window.document, url, row, false);
             } catch (e) {
               console.error("paintRowAvatars error", e);
             }
