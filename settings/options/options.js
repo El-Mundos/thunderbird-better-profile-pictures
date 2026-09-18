@@ -1,15 +1,15 @@
 import {
-  PrivacyMode,
   getProviderDescriptor,
   isAllowedInMode,
   isThirdParty,
+  PrivacyMode,
 } from "../../providers/registry.js";
 import Author from "../../src/Author.js";
+import CacheStorage from "../../src/CacheStorage.js";
 import {
   normalizeMatch,
   sanitizeOverrides,
 } from "../../src/DomainOverrides.js";
-import CacheStorage from "../../src/CacheStorage.js";
 import ProfilePictureFetcher from "../../src/ProfilePictureFetcher.js";
 import SettingsManager from "../SettingsManager.js";
 
@@ -245,7 +245,9 @@ function buildProviderRow(entry, index) {
 
   label.append(checkbox, name);
   if (!allowed) {
-    label.append(buildProviderBadge("providerBadgeBlocked", "is-blocked-badge"));
+    label.append(
+      buildProviderBadge("providerBadgeBlocked", "is-blocked-badge"),
+    );
   }
   if (isThirdParty(descriptor)) {
     label.append(
@@ -459,7 +461,8 @@ async function setInitialsColor() {
 }
 
 async function initCacheRefresh() {
-  const { foundDays, notFoundDays } = await settingsManager.getCacheRefreshDays();
+  const { foundDays, notFoundDays } =
+    await settingsManager.getCacheRefreshDays();
   cacheFoundSelect.value = String(foundDays);
   cacheNotFoundSelect.value = String(notFoundDays);
 }

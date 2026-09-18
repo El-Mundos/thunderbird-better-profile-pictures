@@ -1,7 +1,4 @@
-import {
-  PrivacyMode,
-  reconcileProviderList,
-} from "../providers/registry.js";
+import { PrivacyMode, reconcileProviderList } from "../providers/registry.js";
 import { sanitizeOverrides } from "../src/DomainOverrides.js";
 import defaultSettings from "./defaultSettings.js";
 

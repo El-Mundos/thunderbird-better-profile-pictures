@@ -1,15 +1,15 @@
-import defaultSettings from "../settings/defaultSettings.js";
 import { Scope } from "../providers/Provider.js";
 import ProviderFactory from "../providers/ProviderFactory.js";
 import {
-  PrivacyMode,
   filterProvidersForPrivacy,
   getProviderDescriptor,
+  PrivacyMode,
   reconcileProviderList,
 } from "../providers/registry.js";
+import defaultSettings from "../settings/defaultSettings.js";
 import Author from "./Author.js";
-import { findOverride, sanitizeOverrides } from "./DomainOverrides.js";
 import CacheStorage from "./CacheStorage.js";
+import { findOverride, sanitizeOverrides } from "./DomainOverrides.js";
 import ImageConverter from "./ImageConverter.js";
 import { AvatarStrategy } from "./strategies/AvatarStrategy.js";
 import { CacheStrategy } from "./strategies/CacheStrategy.js";
@@ -116,7 +116,7 @@ export default class ProfilePictureFetcher {
           ProviderFactory.createProvider(id, this.wdow),
         );
       } catch (error) {
-        console.error(`Unknown avatar provider \"${id}\"`, error);
+        console.error(`Unknown avatar provider "${id}"`, error);
         this.providerInstances.set(id, null);
       }
     }
@@ -467,7 +467,11 @@ export default class ProfilePictureFetcher {
         scope: Scope.DOMAIN,
         getUrl: async () => override.url,
       };
-      return await new OnlineStrategy(this, provider, this.author).fetchAvatar();
+      return await new OnlineStrategy(
+        this,
+        provider,
+        this.author,
+      ).fetchAvatar();
     } finally {
       this.disableCache = wasDisabled;
     }

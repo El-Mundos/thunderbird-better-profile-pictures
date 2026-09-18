@@ -1,9 +1,9 @@
-import SettingsManager from "../settings/SettingsManager.js";
 import defaultSettings from "../settings/defaultSettings.js";
+import SettingsManager from "../settings/SettingsManager.js";
 import Author from "./Author.js";
-import RecipientInitial from "./RecipientInitial.js";
 import CacheStorage from "./CacheStorage.js";
 import ProfilePictureFetcher, { daysToMs } from "./ProfilePictureFetcher.js";
+import RecipientInitial from "./RecipientInitial.js";
 
 const MAX_CACHE_SIZE = 500;
 
@@ -224,18 +224,12 @@ export default class AvatarService {
     // registering the Promise would let concurrent callers for the same
     // author each start their own fetch.
     const promise = (async () => {
-      return new ProfilePictureFetcher(
-        window,
-        author,
-        "duckduckgo",
-        false,
-        {
-          providers: await this.getProviderList(),
-          privacyMode: await this.getPrivacyMode(),
-          overrides: await this.getOverrides(),
-          ...(await this.getCacheRefresh()),
-        },
-      ).getAvatar();
+      return new ProfilePictureFetcher(window, author, "duckduckgo", false, {
+        providers: await this.getProviderList(),
+        privacyMode: await this.getPrivacyMode(),
+        overrides: await this.getOverrides(),
+        ...(await this.getCacheRefresh()),
+      }).getAvatar();
     })()
       .then((result) => {
         // Settings changed while this was in flight: callers already waiting

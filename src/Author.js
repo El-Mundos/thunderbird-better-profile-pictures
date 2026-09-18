@@ -40,10 +40,12 @@ export default class Author {
       if (parsed) {
         result = parsed[0].email;
       }
-    } catch (_error) { }
+    } catch (_error) {}
     if (!result) {
       const email = author.match(/<(.+)>/);
-      result = email ? email[1].toLowerCase().trim() : author.toLowerCase().trim();
+      result = email
+        ? email[1].toLowerCase().trim()
+        : author.toLowerCase().trim();
     }
     Author._parseCache.set(author, result);
     return result;

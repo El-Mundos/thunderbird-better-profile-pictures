@@ -479,7 +479,9 @@ async function installConversation(window, payload) {
 
   async function replaceAuthorPictureInMessage(message, url) {
     if (!url || url === "") {
-      const wrongInitials = message.querySelector("abbr.better-profile-pictures");
+      const wrongInitials = message.querySelector(
+        "abbr.better-profile-pictures",
+      );
       if (wrongInitials) {
         wrongInitials.classList.remove("better-profile-pictures");
         wrongInitials.classList.add("contactInitials");
@@ -524,9 +526,7 @@ async function installConversation(window, payload) {
         contactInitials.style.backgroundImage = `url("${url}")`;
         contactInitials.textContent = "\u00A0";
       } else {
-        const avatarElement = message.querySelector(
-          ".better-profile-pictures",
-        );
+        const avatarElement = message.querySelector(".better-profile-pictures");
         if (avatarElement) {
           // Clear background color (oklch) when removing initials
           avatarElement.style.background = null;
@@ -836,7 +836,9 @@ function installCss(window) {
   // Applied on every call: the shape is a custom property on the root
   // element, set from the current setting, not part of the stylesheet text.
   applyAvatarStyle(window);
-  const existingStyle = document.getElementById("better-profile-pictures-style");
+  const existingStyle = document.getElementById(
+    "better-profile-pictures-style",
+  );
   if (existingStyle) {
     existingStyle.textContent = avatarCss;
     return;
@@ -1060,7 +1062,7 @@ async function getRowFirstId(rows) {
     const minimumRowKey = Math.min(...rowKeys);
     const row = rows.get(minimumRowKey);
     return parseInt(row.id.replace("threadTree-row", ""), 10);
-  } catch (_error) { }
+  } catch (_error) {}
 
   try {
     const row = rows[0][1];
