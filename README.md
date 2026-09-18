@@ -91,6 +91,9 @@ so, and credits Noam SCHMITT as co-author. The fork's commits are replayed on
 top with their original authors and dates, and where one had to be adapted to
 2.5.1, its message ends with a replay note saying how.
 
+The history was rebuilt this way by Clément Gayot, who also contributed the
+security fixes listed in the [changelog](CHANGELOG.md).
+
 Every commit message carries its reasoning.
 
 ## Licence
