@@ -5,6 +5,43 @@
 - Add automatic retry delay after 30 days when no profile picture is found
 - Options to disable and enable sources
 
+## 2.6.0 - Unreleased
+
+First release as Better Profile Pictures, a fork with its own add-on ID: it
+installs alongside Auto Profile Picture rather than upgrading it.
+
+### Added
+
+- Configurable provider chain: choose which sources are tried, and in what order
+- Privacy modes for online lookups
+- Per-sender rules to pin a specific picture or hide one entirely
+- User-set cache lifetimes, for both found and not-found pictures
+- Avatar shape and initials colour settings
+- Rebuilt settings page
+
+### Changed
+
+- The inbox list is no longer re-scanned on every message open
+- Inbox-list avatars render from the viewport only, with hard ceilings on rows walked per pass
+- Correspondent resolution is memoized per message, and recycled rows repaint from a cache
+- Cached pictures and not-found markers expire after a set time
+- Libravatar and the favicon-webpage fallback are no longer in the default lookup chains
+- Classes, dataset keys and element ids are namespaced, so the add-on can run next to Auto Profile Picture
+- Compatible with Thunderbird 128 to 157
+
+### Fixed
+
+- Runaway folder scan when `firstDisplayedMessageId` was NaN
+- `disableCache` is honoured when writing to the cache, not only when reading
+- Pictures from domain-level providers are cached once per domain instead of once per address
+- The cards view layout also works before Thunderbird 155
+
+### Security
+
+- SVG pictures are rasterized to PNG before they reach Thunderbird's privileged UI
+- Downloaded pictures must be `image/*` and at most 1 MB
+- BIMI logo URLs must be HTTPS on a public host name, with no port, credentials or IP address
+
 ## 2.5.1 - 2026-09-14
 
 ### Fixed
