@@ -2,6 +2,7 @@ import defaultSettings from "../settings/defaultSettings.js";
 import SettingsManager from "../settings/SettingsManager.js";
 import Author from "./Author.js";
 import CacheStorage from "./CacheStorage.js";
+import { domainLookups } from "./DomainLookups.js";
 import ProfilePictureFetcher, { daysToMs } from "./ProfilePictureFetcher.js";
 import RecipientInitial from "./RecipientInitial.js";
 
@@ -170,6 +171,9 @@ export default class AvatarService {
    * Fetches already in flight were started under the old chain. They are
    * forgotten too, so the next lookup starts afresh, and getAvatar does not
    * cache what they return.
+   *
+   * Also run when the picture cache is cleared, so the domain misses held in
+   * memory go with it.
    */
   invalidateSettings() {
     this.providerList = null;
@@ -179,6 +183,7 @@ export default class AvatarService {
     this.overrides = null;
     this.sessionCacheAvatarUrls.clear();
     this.pendingPromises.clear();
+    domainLookups.clear();
   }
 
   /**
@@ -200,7 +205,11 @@ export default class AvatarService {
    * @returns {Promise<string|null>} - The avatar URL or null if request limit exceeded or not found.
    */
   async getAvatar(author) {
-    const lcAuthor = author.getAuthor().toLowerCase();
+    // Keyed by address, not by the "Name <address>" string: the picture does
+    // not depend on the display name (per-sender rules match the address or
+    // domain, and initials are built separately), and one address shown under
+    // two names would otherwise be looked up twice.
+    const lcAuthor = (author.getEmail() || author.getAuthor()).toLowerCase();
 
     // Already resolved — return immediately.
     if (this.sessionCacheAvatarUrls.has(lcAuthor)) {

@@ -15,7 +15,6 @@ import { AvatarStrategy } from "./strategies/AvatarStrategy.js";
 import { CacheStrategy } from "./strategies/CacheStrategy.js";
 import { ContactsStrategy } from "./strategies/ContactsStrategy.js";
 import { OnlineStrategy } from "./strategies/OnlineStrategy.js";
-import { VoidStrategy } from "./strategies/VoidStrategy.js";
 
 /**
  * Side of the PNG an SVG avatar is rendered to. The largest avatar drawn is
@@ -124,7 +123,7 @@ export default class ProfilePictureFetcher {
   }
 
   /**
-   * Builds the online lookup steps for the enabled providers, in order.
+   * Builds one lookup step per enabled provider, in chain order.
    *
    * Domain providers get a second attempt against the subdomain-stripped
    * author, since mail from a subdomain usually wants the parent company's
@@ -132,10 +131,11 @@ export default class ProfilePictureFetcher {
    * would change who is being looked up and is skipped.
    *
    * @param {"email"|"domain"|null} kindFilter - Restrict to one provider kind.
-   * @returns {Array<AvatarStrategy>} Ordered online strategies.
+   * @returns {Array<{kind: string, name: string, strategies: Array<AvatarStrategy>}>}
+   *   Steps in lookup order; `name` is what the cache records as the source.
    */
-  buildOnlineStrategies(kindFilter = null) {
-    const strategies = [];
+  buildProviderSteps(kindFilter = null) {
+    const steps = [];
     for (const entry of this.providerList) {
       if (!entry.enabled) {
         continue;
@@ -148,14 +148,26 @@ export default class ProfilePictureFetcher {
       if (!provider) {
         continue;
       }
-      strategies.push(new OnlineStrategy(this, provider, this.author));
+      const strategies = [new OnlineStrategy(this, provider, this.author)];
       if (descriptor.kind === "domain" && this.author.hasSubDomain()) {
         strategies.push(
           new OnlineStrategy(this, provider, this.author.removeSubDomain()),
         );
       }
+      steps.push({ kind: descriptor.kind, name: provider.name, strategies });
     }
-    return strategies;
+    return steps;
+  }
+
+  /**
+   * The online lookups of the enabled providers, in order.
+   * @param {"email"|"domain"|null} kindFilter - Restrict to one provider kind.
+   * @returns {Array<AvatarStrategy>} Ordered online strategies.
+   */
+  buildOnlineStrategies(kindFilter = null) {
+    return this.buildProviderSteps(kindFilter).flatMap(
+      ({ strategies }) => strategies,
+    );
   }
 
   /**
@@ -311,23 +323,20 @@ export default class ProfilePictureFetcher {
   }
 
   /**
-   * Retrieves an icon from the cache
-   * @param {string} domain Domain associated with the icon
-   * @param {string|null} originalDomain Original domain associated with the icon
-   * @returns {Blob|string|boolean} Blob of the icon, "notFound" if not found, or false if not in cache
+   * Reads a cache entry, honouring the cache lifetimes.
+   * @param {string} domain Domain or address the entry is stored under
+   * @returns {Promise<{blob: Blob, fileInfos: Object}|"notFound"|null>} The
+   *   picture with its metadata, "notFound" for a recorded miss, or null.
    */
-  async getFromCache(domain, originalDomain = null) {
+  async getCacheEntry(domain) {
     if (this.disableCache) {
-      return false;
-    }
-    if (this.author.isPublic() && domain !== this.author.getEmail()) {
-      originalDomain = this.author.getEmail();
+      return null;
     }
     const key = `ICON_${domain}`;
 
     const fileInfos = await this.cache.getProperty(key);
     if (!fileInfos) {
-      return false;
+      return null;
     }
 
     try {
@@ -336,7 +345,7 @@ export default class ProfilePictureFetcher {
         // being cached forever. Treat an expired marker as a cache miss.
         if (isExpired(fileInfos.ts, this.refreshNotFoundMs)) {
           this.cache.removeProperty(key);
-          return false;
+          return null;
         }
         return "notFound";
       }
@@ -345,18 +354,49 @@ export default class ProfilePictureFetcher {
       // re-resolves it (BIMI is tried first).
       if (isExpired(fileInfos.ts, this.refreshFoundMs)) {
         this.cache.removeProperty(key);
-        return false;
+        return null;
       }
       const blob = await this.cache.getIcon(fileInfos.path, fileInfos.type);
-      if (originalDomain) {
-        this.cache.setProperty(`ICON_${originalDomain}`, fileInfos);
-      }
-      return blob;
+      return { blob, fileInfos };
     } catch (_error) {
       // corrupted entry
       this.cache.removeProperty(key);
+      return null;
+    }
+  }
+
+  /**
+   * Retrieves an icon from the cache
+   * @param {string} domain Domain associated with the icon
+   * @param {string|null} originalDomain Original domain associated with the icon
+   * @returns {Blob|string|boolean} Blob of the icon, "notFound" if not found, or false if not in cache
+   */
+  async getFromCache(domain, originalDomain = null) {
+    if (this.author.isPublic() && domain !== this.author.getEmail()) {
+      originalDomain = this.author.getEmail();
+    }
+    const entry = await this.getCacheEntry(domain);
+    if (!entry) {
       return false;
     }
+    if (entry === "notFound") {
+      return "notFound";
+    }
+    if (originalDomain) {
+      this.cache.setProperty(`ICON_${originalDomain}`, entry.fileInfos);
+    }
+    return entry.blob;
+  }
+
+  /**
+   * Records a miss under one key only.
+   * @param {string} key Domain or address the miss is stored under
+   */
+  saveNotFound(key) {
+    if (this.disableCache) {
+      return;
+    }
+    this.cache.setProperty(`ICON_${key}`, { type: "notFound", ts: Date.now() });
   }
 
   /**
@@ -373,24 +413,84 @@ export default class ProfilePictureFetcher {
   }
 
   /**
-   * Fetches the domain avatar using various strategies
+   * Fetches the domain avatar, walking the provider chain in its order.
+   *
+   * The cache holds two levels. The address's entry is this person's own
+   * result. The domain's entry is what the domain providers (BIMI, favicons)
+   * found for everyone there, and it answers only for those providers:
+   *  - a domain with no logo no longer stops the next person there from being
+   *    looked up on Gravatar;
+   *  - a logo found for one person does not win over another's Gravatar
+   *    when Gravatar comes first in the chain. The logo stands at the
+   *    position of the provider that found it; domain providers before that
+   *    one had already missed and are skipped.
+   *
+   * Each kind's miss is recorded once all its providers were asked and
+   * missed, whatever the final result, so the next lookup can skip them.
+   *
    * @returns {Blob|string} Blob of the avatar or "notFound" if not found
    */
   async getDomainAvatar() {
-    const topDomain = this.author.getTopDomain();
-    // Every local lookup runs before any network one. The subdomain cache probe
-    // used to sit between two online attempts, which meant a cache hit could be
-    // reached only after a request had already gone out.
-    const strategies = [
-      new ContactsStrategy(this, this.author),
-      new CacheStrategy(this, this.author.getEmail()),
-      new CacheStrategy(this, this.domain),
-      this.author.hasSubDomain()
-        ? new CacheStrategy(this, topDomain)
-        : new VoidStrategy(),
-      ...this.buildOnlineStrategies(),
-    ];
-    return await this.executeStrategies(strategies);
+    const contact = await new ContactsStrategy(this, this.author).fetchAvatar();
+    if (contact) {
+      return contact;
+    }
+    // Every local lookup runs before any network one.
+    const own = await this.getCacheEntry(this.author.getEmail());
+    if (own && own !== "notFound") {
+      // This person's own earlier result: everything before it had missed.
+      return own.blob;
+    }
+    const cached = {
+      email: own,
+      domain:
+        (await this.getCacheEntry(this.domain)) ??
+        (this.author.hasSubDomain()
+          ? await this.getCacheEntry(this.author.getTopDomain())
+          : null),
+    };
+    const steps = this.buildProviderSteps();
+    const missed = { email: 0, domain: 0 };
+    const recordMisses = () => {
+      const keys = { email: this.author.getEmail(), domain: this.domain };
+      for (const kind of ["email", "domain"]) {
+        const total = steps.filter((step) => step.kind === kind).length;
+        if (cached[kind] === null && total > 0 && missed[kind] === total) {
+          this.saveNotFound(keys[kind]);
+        }
+      }
+    };
+
+    for (const { kind, name, strategies } of steps) {
+      const entry = cached[kind];
+      if (entry === "notFound") {
+        continue;
+      }
+      if (entry) {
+        const source = entry.fileInfos.source;
+        // A source no longer in the chain (disabled since, or recorded by an
+        // older release) is taken at the first provider of its kind.
+        const inChain = steps.some((step) => step.name === source);
+        if (source === name || !inChain) {
+          recordMisses();
+          return entry.blob;
+        }
+        continue;
+      }
+      for (const strategy of strategies) {
+        const avatar = await strategy.fetchAvatar();
+        if (avatar) {
+          recordMisses();
+          return avatar;
+        }
+      }
+      missed[kind]++;
+    }
+    // The subdomain-stripped parent's miss is not recorded on disk: it would
+    // stop lookups for sibling subdomains, which may have a logo of their
+    // own. DomainLookups remembers it for the session instead.
+    recordMisses();
+    return "notFound";
   }
 
   /**
@@ -432,9 +532,11 @@ export default class ProfilePictureFetcher {
         console.warn(`Pinned image failed for ${override.match}`);
       }
 
-      const response = this.author.isPublic()
-        ? await this.getPublicAvatar()
-        : await this.getDomainAvatar();
+      if (!this.author.isPublic()) {
+        const response = await this.getDomainAvatar();
+        return response === "notFound" ? null : response;
+      }
+      const response = await this.getPublicAvatar();
       if (response === "notFound") {
         this.saveNotFoundToCache(this.domain);
         return null;
@@ -471,6 +573,7 @@ export default class ProfilePictureFetcher {
         this,
         provider,
         this.author,
+        false,
       ).fetchAvatar();
     } finally {
       this.disableCache = wasDisabled;

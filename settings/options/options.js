@@ -483,6 +483,9 @@ async function setCacheRefreshNotFound() {
 
 async function clearCache() {
   await cache.clearCache();
+  // The background keeps resolved pictures and remembered misses in memory;
+  // without this they would outlive the cleared cache until a restart.
+  browser.runtime.sendMessage({ action: "refreshSettings" });
   await printCacheSize(cacheSizeElement);
   clearCacheButton.disabled = true;
   clearCacheButton.textContent = browser.i18n.getMessage("cacheCleared");

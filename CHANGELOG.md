@@ -25,6 +25,8 @@ installs alongside Auto Profile Picture rather than upgrading it.
 - Inbox-list avatars render from the viewport only, with hard ceilings on rows walked per pass
 - Correspondent resolution is memoized per message, and recycled rows repaint from a cache
 - Each inbox-list avatar appears as soon as its own lookup finishes, instead of every row waiting for the slowest one; a row is still painted once, with its final picture or initials
+- Correspondents at the same domain share its lookups, in flight and, for misses, for the not-found cache lifetime: no more duplicate requests, and each subdomain no longer asks again for its parent domain
+- The same address shown under different names is looked up once
 - Cached pictures and not-found markers expire after a set time
 - Libravatar and the favicon-webpage fallback are no longer in the default lookup chains
 - Classes, dataset keys and element ids are namespaced, so the add-on can run next to Auto Profile Picture
@@ -37,6 +39,8 @@ installs alongside Auto Profile Picture rather than upgrading it.
 - Pictures from domain-level providers are cached once per domain instead of once per address
 - The cards view layout also works before Thunderbird 155
 - Inbox-list rows that appear while avatars are being looked up, for instance when a folder opens on its selected message, are no longer left blank until the next scroll
+- A domain with no logo, or a favicon found for someone else there, no longer keeps a person at that domain from getting their Gravatar; the provider order is followed
+- Clearing the cache also drops the pictures and misses held in memory, instead of keeping them until restart
 
 ### Security
 
