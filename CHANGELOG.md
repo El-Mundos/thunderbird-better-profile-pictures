@@ -35,6 +35,7 @@ installs alongside Auto Profile Picture rather than upgrading it.
 - `disableCache` is honoured when writing to the cache, not only when reading
 - Pictures from domain-level providers are cached once per domain instead of once per address
 - The cards view layout also works before Thunderbird 155
+- Inbox-list rows that appear while avatars are being looked up, for instance when a folder opens on its selected message, are no longer left blank until the next scroll
 
 ### Security
 

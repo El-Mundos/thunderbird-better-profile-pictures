@@ -1446,25 +1446,20 @@ function msgCacheKey(hdr) {
 }
 
 /**
- * Repaints every currently-rendered row from the main-process paint cache.
- * Synchronous and cheap (bounded to visible rows); rows whose avatar is
- * unchanged are skipped by installOnRow, so this never flickers. Rows with no
- * cache entry yet (never-seen senders) are left for the background to resolve.
- * @param {Object} window - The content window.
+ * Lists the rows currently rendered in the thread tree that show a message,
+ * skipping grouped-by-sort header rows and any row that cannot be resolved.
+ * @param {Object} threadTree - The thread tree element.
+ * @returns {Array<{index: number, row: Object, hdr: Object, msgKey: string}>}
  */
-function repaintVisibleFromCache(window) {
-  const threadTree = window?.threadTree;
+function getRenderedMessageRows(threadTree) {
   if (!threadTree || !threadTree._view || !threadTree._rows) {
-    return;
+    return [];
   }
   const view = threadTree._view;
-  const cache = getAvatarPaintCache(window);
-  if (cache.size === 0) {
-    return;
-  }
-  for (const key of threadTree._rows.keys()) {
+  const result = [];
+  for (const [key, row] of threadTree._rows) {
     const index = toRowIndex(key);
-    if (!Number.isInteger(index)) {
+    if (!Number.isInteger(index) || !row) {
       continue;
     }
     try {
@@ -1472,21 +1467,55 @@ function repaintVisibleFromCache(window) {
         continue;
       }
       const hdr = view.getMsgHdrAt ? view.getMsgHdrAt(index) : null;
-      if (!hdr) {
-        continue;
-      }
-      const cached = cache.get(msgCacheKey(hdr));
-      if (!cached) {
-        continue;
-      }
-      const row = threadTree._rows.get(key);
-      if (row) {
-        installOnRow(window.document, cached, row, false);
+      if (hdr) {
+        result.push({ index, row, hdr, msgKey: msgCacheKey(hdr) });
       }
     } catch (_e) {
       // Skip any row we can't resolve.
     }
   }
+  return result;
+}
+
+/**
+ * Repaints every currently-rendered row from the main-process paint cache.
+ * Synchronous and cheap (bounded to visible rows); rows whose avatar is
+ * unchanged are skipped by installOnRow, so this never flickers. Rows with no
+ * cache entry yet (never-seen senders) are left for the background to resolve.
+ * @param {Object} window - The content window.
+ */
+function repaintVisibleFromCache(window) {
+  const cache = getAvatarPaintCache(window);
+  if (cache.size === 0) {
+    return;
+  }
+  for (const { row, msgKey } of getRenderedMessageRows(window?.threadTree)) {
+    const cached = cache.get(msgKey);
+    if (cached) {
+      installOnRow(window.document, cached, row, false);
+    }
+  }
+}
+
+/**
+ * Whether a rendered row shows a message that no pass has resolved yet.
+ *
+ * The background reads the visible rows, spends however long the lookups
+ * take, then paints and waits for the next view change. Thunderbird keeps
+ * rendering in the meantime: it grows the row buffer after a folder opens and
+ * scrolls to the selected message. Those changes fire before the listener is
+ * armed, so without this check their rows stay blank until some unrelated
+ * event comes along.
+ *
+ * @param {Object} window - The content window.
+ * @param {Set<string>} attemptedKeys - Messages the last pass resolved.
+ * @returns {boolean}
+ */
+function hasUnresolvedRows(window, attemptedKeys) {
+  const cache = getAvatarPaintCache(window);
+  return getRenderedMessageRows(window?.threadTree).some(
+    ({ msgKey }) => !cache.has(msgKey) && !attemptedKeys.has(msgKey),
+  );
 }
 
 /**
@@ -1652,50 +1681,32 @@ var headerApi = class extends ExtensionCommon.ExtensionAPI {
         async getVisibleRowMessages(tabId) {
           const { nativeTab } = context.extension.tabManager.get(tabId);
           const window = getContentWindow(nativeTab);
-          const threadTree = window?.threadTree;
-          if (!threadTree || !threadTree._view || !threadTree._rows) {
-            return [];
-          }
-          const view = threadTree._view;
-          const MSG_VIEW_FLAG_DUMMY = 0x20000000;
           const result = [];
-          for (const key of threadTree._rows.keys()) {
-            const index = typeof key === "number" ? key : parseInt(key, 10);
-            if (!Number.isInteger(index)) {
-              continue;
-            }
+          for (const { index, hdr, msgKey } of getRenderedMessageRows(
+            window?.threadTree,
+          )) {
+            let message;
             try {
-              if (
-                view.getFlagsAt &&
-                view.getFlagsAt(index) & MSG_VIEW_FLAG_DUMMY
-              ) {
-                // Grouped-by-sort header row, not a real message.
-                continue;
-              }
-              const hdr = view.getMsgHdrAt ? view.getMsgHdrAt(index) : null;
-              if (!hdr) {
-                continue;
-              }
-              let message;
-              try {
-                message = context.extension.messageManager.convert(hdr);
-              } catch (_e) {
-                message = { author: hdr.author || "", recipients: [] };
-              }
-              result.push({ index, message });
+              message = context.extension.messageManager.convert(hdr);
             } catch (_e) {
-              // Skip any row we can't resolve.
+              message = { author: hdr.author || "", recipients: [] };
             }
+            result.push({ index, key: msgKey, message });
           }
           return result;
         },
 
         /**
-         * Viewport-only: paints avatars onto the currently rendered rows,
-         * keyed by their view index. Bounded to the number of visible rows.
+         * Viewport-only: paints avatars onto the currently rendered rows.
+         *
+         * Payloads are keyed by message, not by row index. The view can
+         * scroll, grow or re-sort while the background resolves them, and an
+         * index read before that would now point at another message's row.
+         * Rows are therefore matched to their message at paint time, and a
+         * message no longer on screen is only cached, for when it comes back.
          *
          * @param {number} tabId - The tab ID.
-         * @param {string} urlsJSON - JSON map of { rowIndex: urlOrInitialsObj }.
+         * @param {string} urlsJSON - JSON map of { messageKey: urlOrInitialsObj }.
          * @returns {Object} - Status object.
          */
         async paintRowAvatars(tabId, urlsJSON) {
@@ -1709,31 +1720,23 @@ var headerApi = class extends ExtensionCommon.ExtensionAPI {
           installCss(window);
           ensurePersistentRepaint(window);
 
-          const view = threadTree._view;
           const cache = getAvatarPaintCache(window);
           // Keep the cache from growing without bound on very long sessions.
           if (cache.size > 4000) {
             cache.clear();
           }
+          // Cached by message so a row Thunderbird recycles later can be
+          // repainted without asking the background.
+          for (const [msgKey, url] of Object.entries(urls)) {
+            cache.set(msgKey, url);
+          }
 
-          for (const [indexStr, url] of Object.entries(urls)) {
-            const index = parseInt(indexStr, 10);
-            const row = threadTree._rows.get(index);
-            if (!row) {
+          for (const { row, msgKey } of getRenderedMessageRows(threadTree)) {
+            if (!Object.hasOwn(urls, msgKey)) {
               continue;
             }
-            // Cache by the stable message key so we can repaint this row later
-            // (after Thunderbird recycles it) without asking the background.
             try {
-              const hdr = view?.getMsgHdrAt ? view.getMsgHdrAt(index) : null;
-              if (hdr) {
-                cache.set(msgCacheKey(hdr), url);
-              }
-            } catch (_e) {
-              // Non-fatal: we just won't have a cache entry for this row.
-            }
-            try {
-              await installOnRow(window.document, url, row, false);
+              await installOnRow(window.document, urls[msgKey], row, false);
             } catch (e) {
               console.error("paintRowAvatars error", e);
             }
@@ -1773,12 +1776,26 @@ var headerApi = class extends ExtensionCommon.ExtensionAPI {
         /**
          * Installs event listeners on the inbox list.
          *
+         * When the messages the last pass resolved are given, it first
+         * checks for rendered rows outside them, and returns "stale" at once
+         * if there are any rather than waiting for an event that has already
+         * passed. The check and the listeners are set up in the same task, so
+         * no change can slip between them.
+         *
          * @param {number} tabId - The tab ID.
+         * @param {string} [attemptedKeysJSON] - JSON array of message keys.
+         * @returns {Promise<string>} The event type, or "stale".
          */
-        async installEventListeners(tabId) {
+        async installEventListeners(tabId, attemptedKeysJSON) {
           const { nativeTab } = context.extension.tabManager.get(tabId);
           const window = getContentWindow(nativeTab);
           const threadTree = window.threadTree;
+          if (
+            attemptedKeysJSON &&
+            hasUnresolvedRows(window, new Set(JSON.parse(attemptedKeysJSON)))
+          ) {
+            return "stale";
+          }
           const eventType = await initializeAllEventListeners(
             threadTree,
             0,

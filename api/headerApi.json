@@ -142,6 +142,11 @@
             "type": "integer",
             "name": "tabId",
             "optional": true
+          },
+          {
+            "type": "string",
+            "name": "attemptedKeys",
+            "optional": true
           }
         ]
       }

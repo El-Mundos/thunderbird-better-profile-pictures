@@ -421,11 +421,20 @@ class MessagesService {
   /**
    * Installs DOM listeners for the given tab ID.
    * @param {number} tabId - The tab ID.
+   * @param {Array<string>|null} [attemptedKeys=null] - Messages the pass just
+   *   resolved. When given, rows that appeared outside them during the pass
+   *   start the next pass at once instead of waiting for another event.
    * @returns {Promise<void>}
    */
-  async installDOMlistener(tabId) {
-    const eventType = await browser.headerApi.installEventListeners(tabId);
-    if (eventType === "scroll") {
+  async installDOMlistener(tabId, attemptedKeys = null) {
+    const eventType = await browser.headerApi.installEventListeners(
+      tabId,
+      attemptedKeys ? JSON.stringify(attemptedKeys) : undefined,
+    );
+    if (eventType === "stale") {
+      // Those rows have already waited for a whole pass.
+      this.lastDisplayInboxListCall = 0;
+    } else if (eventType === "scroll") {
       this.lastDisplayInboxListCall -= this.WAIT_TIME_MS / 2;
     }
     await this.displayInboxList(null, true);
@@ -495,13 +504,13 @@ class MessagesService {
     // Resolve each visible row's correspondent (memoized, cheap).
     const resolved = (
       await Promise.all(
-        rows.map(async ({ index, message }) => {
+        rows.map(async ({ key, message }) => {
           try {
             const author = await this.mailService.getCorrespondent(
               message,
               "inboxList",
             );
-            return { index, author };
+            return { key, author };
           } catch (_e) {
             return null;
           }
@@ -520,12 +529,12 @@ class MessagesService {
     // recycled rows actually mutate the DOM.
     const urls = {};
     await Promise.all(
-      resolved.map(async ({ index, author }) => {
+      resolved.map(async ({ key, author }) => {
         const identifier = author.getEmail() || author.getAuthor() || "";
         try {
           const url = await this.avatarService.getAvatar(author);
           if (url && typeof url === "object") {
-            urls[index] = {
+            urls[key] = {
               value: url.value ?? "",
               color: url.color ?? null,
               identifier: url.identifier || identifier,
@@ -533,13 +542,13 @@ class MessagesService {
             return;
           }
           if (url) {
-            urls[index] = { value: url, identifier };
+            urls[key] = { value: url, identifier };
             return;
           }
         } catch (_e) {
           // Fall through to initials.
         }
-        urls[index] = await this.avatarService.buildInitials(author);
+        urls[key] = await this.avatarService.buildInitials(author);
       }),
     );
 
@@ -550,11 +559,15 @@ class MessagesService {
 
     // Re-arm: block until the next relevant view change (scroll, folder
     // change, sort, row recycle), then repaint the new visible set. Each pass
-    // is bounded to visible rows, so this loop is cheap.
+    // is bounded to visible rows, so this loop is cheap. Rows that changed
+    // during this pass start the next one straight away.
     if (currentProcessId !== this.processId) {
       return;
     }
-    await this.installDOMlistener(tabId);
+    await this.installDOMlistener(
+      tabId,
+      rows.map(({ key }) => key),
+    );
   }
 }
 
