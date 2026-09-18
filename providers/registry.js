@@ -15,12 +15,15 @@
  *   been restricted to them.
  * @property {"dns"|"sender-site"|"third-party"} disclosure - Who learns that you
  *   received this mail, when the provider resolves.
- *     "dns"         - a DNS lookup against the sender's domain, plus fetching
- *                     the logo the record points at. No outside party, and no
- *                     request to the sender's web server.
+ *     "dns"         - reads a record the sender publishes in DNS, then fetches
+ *                     the logo it names. The query goes to Cloudflare's
+ *                     DNS-over-HTTPS resolver, which learns the sender's
+ *                     domain. The logo URL is the sender's to choose, so they
+ *                     can serve it themselves and see your IP address and
+ *                     when the message was listed, much like a tracking pixel.
  *     "sender-site" - fetches and parses a page from the sender's own web
  *                     server. No outside party, but a direct, timed hit on
- *                     their site that correlates with you opening the message.
+ *                     their site that correlates with the message being listed.
  *     "third-party" - sends the correspondent's address or domain to a service
  *                     unrelated to the sender.
  * @property {boolean} slow - Whether a miss is expensive. Currently only the
@@ -128,9 +131,11 @@ export function shapeToRadius(shape) {
  * Privacy modes, in increasing order of strictness.
  *
  * OFF      - every enabled provider runs; current behaviour.
- * BALANCED - DNS-backed lookups only, which today means BIMI. No outside
- *            service learns who you correspond with, and the sender's web
- *            server sees no request tied to you opening the message.
+ * BALANCED - DNS-backed lookups only, which today means BIMI. No avatar or
+ *            favicon service learns who you correspond with, but the DNS
+ *            resolver sees the sender's domain, and the sender can observe
+ *            the logo being fetched. It keeps unrelated services out; it does
+ *            not hide anything from the sender.
  * STRICT   - no network lookups of any kind. Address book photos, the on-disk
  *            cache and generated initials only.
  * @enum {string}
@@ -160,9 +165,9 @@ export function filterProvidersForPrivacy(providerList, mode) {
     return providerList;
   }
   // BALANCED permits only DNS-backed lookups. The favicon scraper is excluded
-  // even though it contacts no outside party: fetching a page from the sender's
-  // web server is a timed request that correlates with you opening the message,
-  // which is a louder signal than resolving a DNS record.
+  // too, although the sender can observe BIMI's logo fetch just as well: it
+  // downloads and parses a whole page from their server to find one link, then
+  // follows that link wherever it leads.
   const allowed = mode === PrivacyMode.BALANCED ? new Set(["dns"]) : new Set();
   return providerList.map((entry) => {
     const descriptor = getProviderDescriptor(entry.id);

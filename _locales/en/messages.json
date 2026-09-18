@@ -162,7 +162,7 @@
     "description": "Explanation of the off mode."
   },
   "privacyModeBalancedHint": {
-    "message": "Only BIMI is used: a DNS lookup against the sender's own domain. No outside service is contacted, and no request is made to the sender's website. Fewer pictures will be found.",
+    "message": "Only BIMI is used: the logo the sender's domain publishes in DNS. No avatar or icon service is contacted, but Cloudflare's DNS resolver sees the sender's domain, and the logo is downloaded from wherever the sender chose, which can tell them when the message was listed. Fewer pictures will be found.",
     "description": "Explanation of the balanced mode."
   },
   "privacyModeStrictHint": {

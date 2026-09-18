@@ -34,7 +34,8 @@ to be forked and would like it merged back when he is able to.
 
 **Privacy**
 
-- Online lookups are opt-in and configurable, not implicit.
+- Online lookups are configurable: choose the sources, or restrict them with a
+  privacy mode. BIMI, Gravatar and DuckDuckGo are on by default.
 - Libravatar and the favicon-webpage fallback were dropped from the default
   chains. The latter downloaded a sender's whole homepage just to hunt for a
   `<link rel="icon">` tag — a lot of traffic, and an odd thing to do given an

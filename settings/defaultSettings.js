@@ -60,7 +60,7 @@ const defaultSettings = {
   // earlier entries cost latency on every miss but win on every hit.
   //
   // The default keeps BIMI first (authoritative — the sender's own domain
-  // publishes it, and it involves no third party), then Gravatar for
+  // publishes it, and no avatar service is involved), then Gravatar for
   // individuals, then DuckDuckGo for company logos. The rest ship disabled:
   // they are alternative sources for the same lookups, so enabling all of them
   // mostly adds round-trips to the miss path rather than finding more logos.
