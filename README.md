@@ -3,7 +3,7 @@
 A Thunderbird add-on that shows a picture for every sender — in the message
 header, and optionally in the inbox list.
 
-It is a fork of [Auto Profile Picture][upstream] 2.5.0 by Noam SCHMITT, rebuilt
+It is a fork of [Auto Profile Picture][upstream] 2.5.1 by Noam SCHMITT, rebuilt
 around two things the original struggled with: **speed on large folders**, and
 **control over what gets sent to third parties** when a picture is looked up
 online.
@@ -83,14 +83,15 @@ supports the CSS `:has()` the cards-view layout relies on.
 
 ## Provenance
 
-`auto_profile_picture-2.5.0-tb.xpi` and `auto_profile_picture-2.5.1-fast.xpi`
-are kept in the repository on purpose. The first is the pristine upstream
-release this fork started from; the second is the build the early performance
-work reproduced byte-for-byte, which is what makes the history auditable rather
-than merely plausible.
+The history carries upstream's own commits up to 2.5.0 (the merge of pull
+request #25), recovered from a public fork after the original repository became
+unreachable. 2.5.1 was published without its source, so the three commits that
+follow were reconstructed from the package on addons.thunderbird.net; each says
+so, and credits Noam SCHMITT as co-author. The fork's commits are replayed on
+top with their original authors and dates, and where one had to be adapted to
+2.5.1, its message ends with a replay note saying how.
 
-The commit history is intact from that 2.5.0 import onward, and every commit
-message carries its reasoning.
+Every commit message carries its reasoning.
 
 ## Licence
 
