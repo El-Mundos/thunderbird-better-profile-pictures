@@ -237,8 +237,11 @@ function mountRecipientAvatar(row, avatar) {
         contentColumn.style.flexDirection = "";
       }
 
-      const readStatusColumn =
-        cardContainer.querySelector(".read-status-column");
+      // Found through its indicator image rather than the read-status-column
+      // class, which only Thunderbird 155 and later set on this column.
+      const readStatusColumn = cardContainer
+        .querySelector(".read-status")
+        ?.closest(".thread-card-column");
       if (readStatusColumn) {
         if (readStatusColumn.style.display) {
           readStatusColumn.style.display = "";
@@ -793,7 +796,10 @@ function installCss(window) {
   .card-layout .card-container:has(.recipient-avatar) {
     grid-template-columns: auto auto 1fr !important;
   }
-  .card-layout .card-container:has(.recipient-avatar) > .read-status-column {
+  /* The read-status column is matched by its indicator image as well as its
+     class: Thunderbird 155 added the class, but the column is the same one
+     before it. */
+  .card-layout .card-container:has(.recipient-avatar) > :is(.read-status-column, .thread-card-column:has(> .read-status)) {
     grid-column: 1;
     grid-row: 1;
   }
@@ -802,14 +808,14 @@ function installCss(window) {
     grid-row: 1;
     margin-inline-end: var(--placeholder-margin);
   }
-  #threadTree[rows="thread-card"] .card-container:has(.recipient-avatar) > .thread-card-column:not(.read-status-column),
+  #threadTree[rows="thread-card"] .card-container:has(.recipient-avatar) > .thread-card-column:not(.read-status-column, :has(> .read-status)),
   #threadTree[rows="thread-card"] .card-container:has(.recipient-avatar) > .thread-card-column:has(.thread-card-row),
-  .card-layout .card-container:has(.recipient-avatar) > .thread-card-column:not(.read-status-column),
+  .card-layout .card-container:has(.recipient-avatar) > .thread-card-column:not(.read-status-column, :has(> .read-status)),
   .card-layout .card-container:has(.recipient-avatar) > .thread-card-column:has(.thread-card-row) {
     grid-column: 3;
     grid-row: 1;
   }
-  .card-container:not(:has(.recipient-avatar)) > .thread-card-column:not(.read-status-column),
+  .card-container:not(:has(.recipient-avatar)) > .thread-card-column:not(.read-status-column, :has(> .read-status)),
   .card-container:not(:has(.recipient-avatar)) > .thread-card-column:has(.thread-card-row) {
     margin-inline-start: calc(var(--recipient-avatar-size) + var(--placeholder-margin));
   }

@@ -75,9 +75,10 @@ matches or removes the other's elements. You will still get two avatars in the
 same place, because both insert into Thunderbird's own `.recipient-avatar`
 container, so removing the original is still the sensible thing to do.
 
-Requires Thunderbird 155 or later, and is capped at 157 because experiment APIs
-track Thunderbird's internals and break on its release cycle. The range is the
-one upstream 2.5.1 was published for.
+Requires Thunderbird 128 or later, and is capped at 157 because experiment APIs
+track Thunderbird's internals and break on its release cycle. 157 is the newest
+version upstream 2.5.1 was published for; 128 is the first ESR whose engine
+supports the CSS `:has()` the cards-view layout relies on.
 
 ## Provenance
 

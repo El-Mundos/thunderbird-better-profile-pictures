@@ -49,7 +49,7 @@
   "browser_specific_settings": {
     "gecko": {
       "id": "better-profile-pictures@kalostech.es",
-      "strict_min_version": "155.0",
+      "strict_min_version": "128.0",
       "strict_max_version": "157.*"
     }
   }
