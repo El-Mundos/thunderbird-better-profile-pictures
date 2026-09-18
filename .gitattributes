@@ -2,6 +2,7 @@
 # export-ignore: the repository's own tooling, tests and docs.
 .gitattributes export-ignore
 .gitignore export-ignore
+.git-blame-ignore-revs export-ignore
 README.md export-ignore
 CHANGELOG.md export-ignore
 SECURITY.md export-ignore

@@ -1,0 +1,7 @@
+# Formatting-only commits, skipped by git blame so each line stays
+# attributed to the commit that actually wrote it. GitHub applies this file
+# automatically; locally, run:
+#   git config blame.ignoreRevsFile .git-blame-ignore-revs
+
+# 🎨 Apply Biome formatting and import order
+d976918a68f899d0c02559b6e0d0c0bdf2f887cd
