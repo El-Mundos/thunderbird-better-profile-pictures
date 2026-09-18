@@ -12,6 +12,12 @@ describe("MailService.getCorrespondent - relays", () => {
     getAvatar: async () => null,
   });
 
+  // getCorrespondent memoizes by message id, and the tests here reuse the
+  // same id for different messages.
+  beforeEach(() => {
+    mailService.correspondentCache.clear();
+  });
+
   it("should handle Duck relay pattern", async () => {
     const msg = { author: DUCK_RELAY_EMAIL, id: 1, folder: {}, recipients: [] };
     globalThis.browser = {

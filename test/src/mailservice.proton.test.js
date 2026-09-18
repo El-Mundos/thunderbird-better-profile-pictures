@@ -6,6 +6,12 @@ describe("MailService.getCorrespondent - Proton aliases", () => {
     getAvatar: async () => null,
   });
 
+  // getCorrespondent memoizes by message id, and the tests here reuse the
+  // same id for different messages.
+  beforeEach(() => {
+    mailService.correspondentCache.clear();
+  });
+
   describe("passmail.com aliases", () => {
     it("should handle simple passmail.com alias", async () => {
       const protonEmail =

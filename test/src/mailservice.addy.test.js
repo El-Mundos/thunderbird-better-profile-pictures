@@ -6,6 +6,12 @@ describe("MailService.getCorrespondent - addy.io aliases", () => {
     getAvatar: async () => null,
   });
 
+  // getCorrespondent memoizes by message id, and the tests here reuse the
+  // same id for different messages.
+  beforeEach(() => {
+    mailService.correspondentCache.clear();
+  });
+
   it("should use x-anonaddy-original-sender header when present", async () => {
     const addyEmail = "nztka5rx+no-reply=amazon.com@anonaddy.me";
     const headerEmail = "original@sender.com";
