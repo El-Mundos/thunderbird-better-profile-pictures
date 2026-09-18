@@ -273,49 +273,6 @@ function isSvgDataUrl(dataUrl) {
   return typeof dataUrl === "string" && dataUrl.startsWith(SVG_DATA_PREFIX);
 }
 
-function decodeSvgPayload(dataUrl, win) {
-  const base64Match = dataUrl.match(/^data:image\/svg\+xml;base64,(.+)$/);
-  if (base64Match) {
-    const atobFn = win.atob || atob;
-    return atobFn(base64Match[1]);
-  }
-  const urlMatch = dataUrl.match(/^data:image\/svg\+xml,(.+)$/);
-  if (urlMatch) {
-    try {
-      return decodeURIComponent(urlMatch[1]);
-    } catch (error) {
-      console.error("Error decoding SVG payload:", error);
-      return null;
-    }
-  }
-  console.error("Invalid SVG data URL format");
-  return null;
-}
-
-function buildSvgElement(dataUrl, width, height, win) {
-  const svgString = decodeSvgPayload(dataUrl, win);
-  if (!svgString) {
-    return null;
-  }
-
-  const parser = new win.DOMParser();
-  const svgDoc = parser.parseFromString(svgString, "image/svg+xml");
-  const parserError = svgDoc.querySelector("parsererror");
-  if (parserError) {
-    console.error("SVG parsing error:", parserError.textContent);
-    return null;
-  }
-
-  const svgElement = svgDoc.documentElement;
-  svgElement.setAttribute("width", width.toString());
-  svgElement.setAttribute("height", height.toString());
-  if (!svgElement.getAttribute("viewBox")) {
-    svgElement.setAttribute("viewBox", `0 0 ${width} ${height}`);
-  }
-  svgElement.style.display = "block";
-  return markAvatarElement(win.document.importNode(svgElement, true));
-}
-
 /**
  * Removes all existing avatar elements from a container.
  * @param {HTMLElement} container - The container element to remove avatars from.
@@ -427,7 +384,6 @@ function drawStaticImageToCanvas(canvas, iconUrl, size) {
 
 /**
  * Helper function to draw a data URL directly to canvas without triggering CSP.
- * For SVG images, replaces the canvas with an SVG element.
  * @param {string} dataUrl - The data URL to draw
  * @param {HTMLCanvasElement} canvas - The canvas element to draw to
  * @param {number} width - Target width
@@ -437,13 +393,13 @@ function drawStaticImageToCanvas(canvas, iconUrl, size) {
  */
 async function drawDataUrlToCanvas(dataUrl, canvas, width, height, win) {
   try {
+    // SVG is markup, usually written by the sender, and this document is
+    // privileged chrome: importing it would let its <style> restyle the whole
+    // page. The background rasterizes SVG before sending it, so one reaching
+    // here is refused rather than trusted.
     if (isSvgDataUrl(dataUrl)) {
-      const svgElement = buildSvgElement(dataUrl, width, height, win);
-      if (!svgElement || !canvas.parentNode) {
-        return false;
-      }
-      canvas.parentNode.replaceChild(svgElement, canvas);
-      return true;
+      console.error("Refusing to draw an SVG avatar into a chrome document");
+      return false;
     }
 
     const matches = dataUrl.match(DATA_URL_REGEX);

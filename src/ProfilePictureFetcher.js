@@ -10,11 +10,24 @@ import {
 import Author from "./Author.js";
 import { findOverride, sanitizeOverrides } from "./DomainOverrides.js";
 import CacheStorage from "./CacheStorage.js";
+import ImageConverter from "./ImageConverter.js";
 import { AvatarStrategy } from "./strategies/AvatarStrategy.js";
 import { CacheStrategy } from "./strategies/CacheStrategy.js";
 import { ContactsStrategy } from "./strategies/ContactsStrategy.js";
 import { OnlineStrategy } from "./strategies/OnlineStrategy.js";
 import { VoidStrategy } from "./strategies/VoidStrategy.js";
+
+/**
+ * Side of the PNG an SVG avatar is rendered to. The largest avatar drawn is
+ * 48 CSS pixels (conversation popups); this keeps it sharp at 3x scaling.
+ */
+const SVG_RASTER_SIZE = 144;
+
+/**
+ * Largest picture that will be downloaded. Real favicons, logos and avatars
+ * stay well under 300 KiB, multi-resolution .ico files being the largest.
+ */
+const MAX_IMAGE_BYTES = 1024 * 1024;
 
 /**
  * Converts a day count from settings into milliseconds.
@@ -220,6 +233,46 @@ export default class ProfilePictureFetcher {
   }
 
   /**
+   * Reads a response body, giving up once it passes MAX_IMAGE_BYTES.
+   *
+   * The URL often comes from the sender (a BIMI record, a pinned rule, a
+   * scraped <link>), so the size is theirs to choose. Reading in chunks stops
+   * an oversized body before it is held in memory in full.
+   *
+   * @param {Response} response Successful response
+   * @returns {Promise<Blob>} Body, typed from its Content-Type header
+   * @throws {Error} If the body is missing or too large
+   */
+  async readCappedBody(response) {
+    if (!response.body) {
+      throw new Error("Empty response body");
+    }
+    const declared = Number(response.headers.get("content-length"));
+    if (declared > MAX_IMAGE_BYTES) {
+      response.body.cancel();
+      throw new Error(`Image too large (${declared} bytes)`);
+    }
+    const reader = response.body.getReader();
+    const chunks = [];
+    let total = 0;
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) {
+        break;
+      }
+      total += value.byteLength;
+      if (total > MAX_IMAGE_BYTES) {
+        reader.cancel();
+        throw new Error(`Image too large (over ${MAX_IMAGE_BYTES} bytes)`);
+      }
+      chunks.push(value);
+    }
+    return new Blob(chunks, {
+      type: response.headers.get("content-type") || "",
+    });
+  }
+
+  /**
    * Downloads an image from a URL
    * @param {string} url URL to download the image from
    * @param {string} iconDomain Domain associated with the icon
@@ -231,7 +284,7 @@ export default class ProfilePictureFetcher {
       if ((response.status === 404 && source === "gravatar") || !response.ok) {
         return null;
       }
-      let blob = await response.blob();
+      let blob = await this.readCappedBody(response);
 
       if (blob.type.includes("text/plain")) {
         const string = await blob.text();
@@ -240,8 +293,15 @@ export default class ProfilePictureFetcher {
           // happens with noreply@recruiting.facebook.com for instance
           blob = new Blob([string], { type: "image/svg+xml" });
         } else {
-          throw new Error("Invalid image type", blob.type);
+          throw new Error(`Invalid image type ${blob.type}`);
         }
+      }
+
+      // Hosts answer a miss with a 200 page, and the favicon scraper follows
+      // <link> hrefs that lead to HTML. Neither is a picture, and caching one
+      // keeps it for the whole refresh interval.
+      if (!blob.type.startsWith("image/")) {
+        throw new Error(`Invalid image type ${blob.type || "(none)"}`);
       }
 
       this.saveBlobToCache(blob, iconDomain, source);
@@ -414,17 +474,47 @@ export default class ProfilePictureFetcher {
   }
 
   /**
+   * Rasterizes an SVG avatar so that only pixels ever leave the background.
+   *
+   * SVG is markup, and most of it comes from whoever controls the sender's
+   * domain: BIMI logos are fetched from a URL their DNS record chooses. A
+   * data URL is painted into Thunderbird's own chrome documents by headerApi,
+   * where an SVG's <style> would apply to the whole page. A PNG carries no
+   * markup, so it can be painted there without trusting its author.
+   *
+   * @param {Blob} blob Avatar image
+   * @returns {Promise<Blob|null>} The blob unchanged if it is not SVG, a PNG
+   *   rendering if it is, or null if the SVG cannot be rendered.
+   */
+  async rasterizeSvg(blob) {
+    if (!blob.type.startsWith("image/svg+xml")) {
+      return blob;
+    }
+    try {
+      return await new ImageConverter(blob).svgUrlToFile(
+        await blob.text(),
+        SVG_RASTER_SIZE,
+      );
+    } catch (error) {
+      console.warn("Could not render SVG avatar", error);
+      return null;
+    }
+  }
+
+  /**
    * Fetches the avatar in the specified format
    * @param {string} format Format of the avatar ("url" or "file")
    * @returns {Promise<string|File|null>} URL or File object of the avatar or null if not found
    */
   async getAvatar(format = "url") {
     const blob = await this.getAvatarBlob();
-    if (blob) {
-      return format === "file"
-        ? this.blobToFile(blob)
-        : await this.blobToUrl(blob);
+    if (!blob) {
+      return null;
     }
-    return null;
+    if (format === "file") {
+      return this.blobToFile(blob);
+    }
+    const displayable = await this.rasterizeSvg(blob);
+    return displayable ? await this.blobToUrl(displayable) : null;
   }
 }

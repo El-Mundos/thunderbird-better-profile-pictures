@@ -10,16 +10,35 @@ export default class ImageConverter {
   /**
    * Converts an SVG string to a PNG file.
    * @param {string} svgString - The SVG string to convert.
+   * @param {number} [size=1000] - Width and height of the output, in pixels.
    * @returns {Promise<File>} - The converted PNG file.
    */
-  async svgUrlToFile(svgString) {
+  async svgUrlToFile(svgString, size = 1000) {
     const fileName = "avatar.png";
-    let width = 1000;
-    let height = 1000;
+    let width = size;
+    let height = size;
     return new Promise((resolve, reject) => {
       const parser = new DOMParser();
       const svgDoc = parser.parseFromString(svgString, "image/svg+xml");
       const svgElement = svgDoc.documentElement;
+
+      // Without a viewBox, dropping width/height below makes the drawing keep
+      // its intrinsic units and get cropped to the output size instead of
+      // scaled into it. Derive one from the dimensions being dropped.
+      if (!svgElement.getAttribute("viewBox")) {
+        const rawWidth = svgElement.getAttribute("width") || "";
+        const rawHeight = svgElement.getAttribute("height") || "";
+        const intrinsicWidth = parseFloat(rawWidth);
+        const intrinsicHeight = parseFloat(rawHeight);
+        // A percentage is relative to the viewport, not a drawing size.
+        const isRelative = rawWidth.includes("%") || rawHeight.includes("%");
+        if (!isRelative && intrinsicWidth > 0 && intrinsicHeight > 0) {
+          svgElement.setAttribute(
+            "viewBox",
+            `0 0 ${intrinsicWidth} ${intrinsicHeight}`,
+          );
+        }
+      }
 
       const viewBox = svgElement.getAttribute("viewBox");
       const viewBoxValues = viewBox ? viewBox.split(" ").map(Number) : null;
