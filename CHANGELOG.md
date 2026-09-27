@@ -5,7 +5,7 @@
 - Add automatic retry delay after 30 days when no profile picture is found
 - Options to disable and enable sources
 
-## 2.6.0 - Unreleased
+## 2.6.0 - 2026-09-27
 
 First release as Better Profile Pictures, a fork with its own add-on ID: it
 installs alongside Auto Profile Picture rather than upgrading it.
