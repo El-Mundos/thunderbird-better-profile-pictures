@@ -18,8 +18,8 @@ re-resolved the same correspondent repeatedly. On a folder with a few thousand
 messages that turns into a visibly unresponsive Thunderbird.
 
 Noam's repository went offline while his GitHub account was suspended, so the
-fixes had nowhere to go upstream. He was asked first and was happy for the work
-to be forked and would like it merged back when he is able to.
+fixes had nowhere to go upstream. He was told about the fork before it was
+published, and would like the fixes to reach the official add-on too.
 
 ## What changed
 
