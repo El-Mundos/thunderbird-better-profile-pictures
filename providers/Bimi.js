@@ -69,7 +69,10 @@ export default class BimiProvider extends Provider {
     const name = encodeURIComponent(`default._bimi.${domain}`);
     const response = await this.wdow.fetch(
       `https://cloudflare-dns.com/dns-query?name=${name}&type=TXT`,
-      { headers: { Accept: "application/dns-json" } },
+      {
+        headers: { Accept: "application/dns-json" },
+        signal: AbortSignal.timeout(5000),
+      },
     );
     const json = await response.json();
     const records = json.Answer;

@@ -144,21 +144,54 @@ describe("MessagesService.displayInboxList", () => {
     expect(calls.paint).to.have.length(1);
   });
 
-  it("arms the listener only once every row is painted", async () => {
+  it("re-arms the listener without waiting for a slow lookup", async () => {
+    let release;
     const { service, calls } = setup(
       [{ rows: [row(0, "f:1", "fast@x.org"), row(1, "f:2", "slow@y.org")] }],
-      async (author) => {
-        if (author.getEmail() === "slow@y.org") {
-          await wait(80);
-        }
-        return null;
-      },
+      (author) =>
+        author.getEmail() === "slow@y.org"
+          ? new Promise((resolve) => {
+              release = resolve;
+            })
+          : Promise.resolve(null),
     );
     service.displayInboxList(null);
     await settle();
 
-    expect(calls.order).to.deep.equal(["paint", "paint", "listen"]);
+    // Listening while the slow row is still pending, so a scroll is heard.
+    expect(calls.listen).to.have.length(1);
+    expect(calls.paint.map((payload) => Object.keys(payload))).to.deep.equal([
+      ["f:1"],
+    ]);
+
+    release(null);
+    await settle();
     // No picture found: initials, still painted once per row.
     expect(calls.paint[1]["f:2"].value).to.equal("XX");
+  });
+
+  it("still paints a lookup that settles after the next pass began", async () => {
+    let release;
+    const { service, calls } = setup(
+      [
+        { rows: [row(0, "f:1", "slow@y.org")], listener: "stale" },
+        { rows: [row(40, "f:41", "c@z.org")] },
+      ],
+      (author) =>
+        author.getEmail() === "slow@y.org"
+          ? new Promise((resolve) => {
+              release = resolve;
+            })
+          : Promise.resolve(`data:${author.getEmail()}`),
+    );
+    service.displayInboxList(null);
+    await settle();
+    expect(calls.visibleAt).to.have.length(2);
+
+    release("data:slow@y.org");
+    await settle();
+    const painted = Object.assign({}, ...calls.paint);
+    expect(painted["f:1"].value).to.equal("data:slow@y.org");
+    expect(painted["f:41"].value).to.equal("data:c@z.org");
   });
 });

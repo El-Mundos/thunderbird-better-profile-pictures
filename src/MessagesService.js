@@ -507,10 +507,10 @@ class MessagesService {
    *
    * Instead of walking the whole folder to map avatars to global message
    * offsets, this reads ONLY the rows currently rendered on screen (bounded to
-   * ~a few dozen regardless of folder size), resolves their avatars, paints
-   * each as it arrives, then re-arms a listener so the next scroll / view
-   * change repaints the new set of visible rows. This is what makes big
-   * folders fast.
+   * ~a few dozen regardless of folder size), starts resolving their avatars,
+   * and re-arms a listener straight away so the next scroll / view change
+   * reads the new set of visible rows while those lookups are still painting.
+   * This is what makes big folders fast.
    *
    * @param {number} currentProcessId - Guards against overlapping runs.
    * @param {Object} tab - The tab object (may be null).
@@ -557,6 +557,10 @@ class MessagesService {
     // row is still painted once, with its final value (the avatar if one is
     // found, otherwise initials), never initials first and a picture later.
     // Results settling close together are sent in one paint.
+    //
+    // A newer pass does not cancel these paints. They are keyed by message,
+    // so a late one lands on its row if it is still rendered and is only
+    // cached if not, and dropping it would throw away a finished lookup.
     let batch = {};
     let flushTimer = null;
     let painting = Promise.resolve();
@@ -565,9 +569,6 @@ class MessagesService {
       const payload = JSON.stringify(batch);
       batch = {};
       painting = painting.then(async () => {
-        if (currentProcessId !== this.processId) {
-          return;
-        }
         try {
           await browser.headerApi.paintRowAvatars(tabId, payload);
         } catch (error) {
@@ -575,7 +576,7 @@ class MessagesService {
         }
       });
     };
-    await Promise.all(
+    Promise.all(
       resolved.map(async ({ key, author }) => {
         // Awaited on its own line: `batch[key] = await ...` would bind the
         // batch before the lookup, and write into one already sent.
@@ -583,17 +584,24 @@ class MessagesService {
         batch[key] = payload;
         flushTimer ??= setTimeout(flush, this.PAINT_BATCH_MS);
       }),
-    );
-    if (flushTimer !== null) {
-      clearTimeout(flushTimer);
-      flush();
-    }
-    await painting;
+    )
+      .then(() => {
+        if (flushTimer !== null) {
+          clearTimeout(flushTimer);
+          flush();
+        }
+      })
+      .catch((error) => {
+        console.warn("Error resolving inbox-list avatars:", error);
+      });
 
-    // Re-arm: block until the next relevant view change (scroll, folder
-    // change, sort, row recycle), then repaint the new visible set. Each pass
-    // is bounded to visible rows, so this loop is cheap. Rows that changed
-    // during this pass start the next one straight away.
+    // Re-arm without waiting for the lookups: block until the next relevant
+    // view change (scroll, folder change, sort, row recycle), then read the
+    // new visible set. Waiting for them let one slow sender deafen the list,
+    // so rows scrolled into view stayed blank until something unrelated, such
+    // as a click, started a pass. Lookups already running are shared by
+    // AvatarService, so the next pass does not fetch them again. Rows that
+    // changed while this one was being read start the next pass at once.
     if (currentProcessId !== this.processId) {
       return;
     }

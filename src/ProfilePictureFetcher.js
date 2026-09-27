@@ -292,7 +292,10 @@ export default class ProfilePictureFetcher {
    * @returns {Blob|null} Blob of the downloaded image or null if not found
    */
   async downloadImage(url, iconDomain, source = this.providerName) {
-    return await this.wdow.fetch(url).then(async (response) => {
+    // Bounded like every other lookup fetch: a request that never answers
+    // would hold its row, and every row sharing its lookup, blank for good.
+    const signal = AbortSignal.timeout(5000);
+    return await this.wdow.fetch(url, { signal }).then(async (response) => {
       if ((response.status === 404 && source === "gravatar") || !response.ok) {
         return null;
       }
