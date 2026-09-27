@@ -1317,6 +1317,41 @@ function ensurePersistentRepaint(window) {
   const observer = new window.MutationObserver(schedule);
   observer.observe(threadTree, { childList: true, subtree: true });
   window.__apPersistentRepaintObserver = observer;
+  window.__apPersistentRepaintScroll = schedule;
+}
+
+/**
+ * Undoes everything the add-on did to a message list's window.
+ *
+ * The repaint hook, its paint cache and the painted avatars all live on the
+ * window, which outlives the add-on. Left in place, a disabled or removed
+ * add-on kept repainting avatars until Thunderbird restarted, and an updated
+ * one found the hook already installed, skipped its own, and was repainted
+ * by the previous version's code.
+ * @param {Object} window - The content window.
+ */
+function teardownThreadPane(window) {
+  window.__apPersistentRepaintObserver?.disconnect();
+  if (window.__apPersistentRepaintScroll) {
+    window.threadTree?.removeEventListener(
+      "scroll",
+      window.__apPersistentRepaintScroll,
+    );
+  }
+  delete window.__apPersistentRepaintObserver;
+  delete window.__apPersistentRepaintScroll;
+  delete window.__apPersistentRepaintInstalled;
+  delete window.__apAvatarPaintCache;
+
+  for (const avatar of window.document.querySelectorAll(
+    EXTENSION_AVATAR_SELECTOR,
+  )) {
+    avatar.remove();
+  }
+  window.document.documentElement.style.removeProperty(
+    "--recipient-avatar-radius",
+  );
+  uninstallCss(window);
 }
 
 // biome-ignore lint/correctness/noUnusedVariables: Variable name required by the extension API
@@ -1522,9 +1557,21 @@ var headerApi = class extends ExtensionCommon.ExtensionAPI {
     };
   }
 
-  onShutdown(_isAppShutdown) {
+  onShutdown(isAppShutdown) {
+    if (isAppShutdown) {
+      // Every window is closing with the application; nothing to undo.
+      return;
+    }
     for (const window of Services.wm.getEnumerator("mail:3pane")) {
       for (const nativeTab of window.gTabmail.tabInfo) {
+        if (nativeTab.mode?.name === "mail3PaneTab") {
+          try {
+            teardownThreadPane(getContentWindow(nativeTab));
+          } catch (e) {
+            // One tab failing to clean up must not stop the others.
+            console.error("Error removing inbox-list avatars:", e);
+          }
+        }
         const messageBrowserWindow = getMessageWindow(nativeTab);
         if (messageBrowserWindow) {
           uninstall(messageBrowserWindow);

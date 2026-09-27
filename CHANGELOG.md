@@ -43,6 +43,7 @@ installs alongside Auto Profile Picture rather than upgrading it.
 - Clearing the cache also drops the pictures and misses held in memory, instead of keeping them until restart
 - One slow sender no longer leaves the inbox list blank after scrolling until something else, like a click, triggers a repaint
 - Picture downloads and BIMI lookups give up after 5 seconds instead of waiting on an unresponsive server
+- Disabling, removing or updating the add-on removes its inbox-list avatars and stops repainting them, instead of leaving the previous version running until Thunderbird restarts
 
 ### Security
 
