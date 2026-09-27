@@ -44,6 +44,9 @@ credentials or IP address.
   Drive shares), one header of that message to find the real sender.
 - `addressBooks`: use contact photos; optionally save a found picture to a
   newly created contact (a setting, described in the privacy policy).
+- `accountsRead`: required for the `mailTabs` API (`onDisplayedFolderChanged`
+  starts painting when a folder is opened). The accounts API itself is not
+  called.
 - `storage`: settings and the picture cache.
 - `<all_urls>`: BIMI logos are hosted wherever each organisation chooses.
 
