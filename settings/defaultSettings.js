@@ -7,7 +7,6 @@
  * @property {number} cacheRefreshNotFoundDays - Days before a "no picture" result is retried. 0 never retries.
  * @property {number} cacheRefreshFoundDays - Days before a saved picture is looked up again, so new BIMI records and logo changes are picked up. 0 keeps it indefinitely.
  * @property {number} WAIT_TIME_MS - Wait time in milliseconds for displaying the inbox list.
- * @property {number} SUBBATCH_SIZE - Size of the subbatch for processing messages.
  * @property {Array<{id: string, enabled: boolean}>} providers - Avatar providers in lookup order. MUTABLE.
  * @property {Array<{match: string, mode: string, url?: string}>} domainOverrides - Per-sender rules. MUTABLE.
  * @property {string} avatarShape - circle, rounded or square. MUTABLE.
@@ -47,7 +46,6 @@ const defaultSettings = {
   cacheRefreshNotFoundDays: 7,
   cacheRefreshFoundDays: 14,
   WAIT_TIME_MS: 200,
-  SUBBATCH_SIZE: 15,
   MAX_REQUEST_SIZE: 100,
   // Defaults to "off" so upgrading changes nobody's behaviour. A user who wants
   // the stricter modes opts in.

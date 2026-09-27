@@ -37,57 +37,6 @@
         ]
       },
       {
-        "name": "pictureInboxList",
-        "type": "function",
-        "async": true,
-        "parameters": [
-          {
-            "type": "integer",
-            "name": "tabId",
-            "optional": false
-          },
-          {
-            "type": "string",
-            "name": "urls",
-            "optional": true
-          },
-          {
-            "type": "integer",
-            "name": "offset",
-            "optional": true
-          },
-          {
-            "type": "boolean",
-            "name": "initials",
-            "optional": true
-          }
-        ]
-      },
-      {
-        "name": "getFirstDisplayedMessageId",
-        "type": "function",
-        "async": true,
-        "parameters": [
-          {
-            "type": "integer",
-            "name": "tabId",
-            "optional": true
-          }
-        ]
-      },
-      {
-        "name": "getTotalMessagesCount",
-        "type": "function",
-        "async": true,
-        "parameters": [
-          {
-            "type": "integer",
-            "name": "tabId",
-            "optional": true
-          }
-        ]
-      },
-      {
         "name": "getVisibleRowMessages",
         "type": "function",
         "async": true,
