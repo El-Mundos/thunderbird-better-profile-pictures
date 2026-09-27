@@ -11,3 +11,5 @@ package.json export-ignore
 package-lock.json export-ignore
 test/ export-ignore
 images/*.webp export-ignore
+PRIVACY.md export-ignore
+docs/ export-ignore
