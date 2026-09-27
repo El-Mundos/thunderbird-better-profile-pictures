@@ -41,6 +41,8 @@ installs alongside Auto Profile Picture rather than upgrading it.
 - Inbox-list rows that appear while avatars are being looked up, for instance when a folder opens on its selected message, are no longer left blank until the next scroll
 - A domain with no logo, or a favicon found for someone else there, no longer keeps a person at that domain from getting their Gravatar; the provider order is followed
 - Clearing the cache also drops the pictures and misses held in memory, instead of keeping them until restart
+- One slow sender no longer leaves the inbox list blank after scrolling until something else, like a click, triggers a repaint
+- Picture downloads and BIMI lookups give up after 5 seconds instead of waiting on an unresponsive server
 
 ### Security
 
