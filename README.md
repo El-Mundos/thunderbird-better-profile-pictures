@@ -52,7 +52,17 @@ published, and would like the fixes to reach the official add-on too.
 
 ## Install
 
-No signed release is published yet. Build the `.xpi` yourself:
+Download the `.xpi` from the latest
+[release](https://github.com/El-Mundos/thunderbird-better-profile-pictures/releases/latest).
+In Thunderbird, go to **Add-ons and Themes → the gear icon → Install Add-on
+From File**, and pick it.
+
+The add-on is not on addons.thunderbird.net yet: it needs an Experiment API,
+and ATN is not accepting new add-ons that use one. The plan is to add the
+missing API to Thunderbird itself — see
+[#2](https://github.com/El-Mundos/thunderbird-better-profile-pictures/issues/2).
+
+### Building from source
 
 ```bash
 git clone https://github.com/El-Mundos/thunderbird-better-profile-pictures
@@ -60,12 +70,10 @@ cd thunderbird-better-profile-pictures
 git archive --format=zip -o better_profile_pictures.xpi HEAD
 ```
 
-In Thunderbird, go to **Add-ons and Themes → the gear icon → Install Add-on
-From File**, and pick `better_profile_pictures.xpi`.
-
 The package is the committed tree minus the repository's own tooling, tests
 and docs, which `.gitattributes` marks `export-ignore`. Every entry carries the
-commit's timestamp, so building the same commit twice gives the same file.
+commit's timestamp, so building the same commit twice gives the same file:
+`git archive` of a release tag reproduces that release's `.xpi` exactly.
 
 Settings and cache do not carry over from the original — this is a separate
 add-on with its own ID, so it installs alongside rather than upgrading.
