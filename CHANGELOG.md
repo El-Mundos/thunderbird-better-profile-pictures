@@ -5,6 +5,16 @@
 - Add automatic retry delay after 30 days when no profile picture is found
 - Options to disable and enable sources
 
+## 2.6.1 - 2026-10-22
+
+### Changed
+
+- Compatible with Thunderbird 128 to 158
+
+### Fixed
+
+- The message list shows the recipient only for messages you sent, judged by your identities as Thunderbird's Correspondent column does, instead of for every message in a Sent folder. An Archive folder that also serves as the Sent folder showed your own picture on received mail ([#3](https://github.com/El-Mundos/thunderbird-better-profile-pictures/issues/3))
+
 ## 2.6.0 - 2026-09-27
 
 First release as Better Profile Pictures, a fork with its own add-on ID: it

@@ -143,6 +143,11 @@ function initListeners() {
 
   messenger.contacts.onCreated.addListener(onContactCreated);
 
+  const onIdentityChanged = () => mailService.invalidateOwnAddresses();
+  browser.identities.onCreated.addListener(onIdentityChanged);
+  browser.identities.onUpdated.addListener(onIdentityChanged);
+  browser.identities.onDeleted.addListener(onIdentityChanged);
+
   browser.tabs.onUpdated.addListener(async (tabId, _changeInfo, tab) => {
     if (tab.status === "complete" && tab.type === "special") {
       // Thunderbird Conversations tab

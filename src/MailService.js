@@ -11,6 +11,46 @@ class MailService {
     // selection) don't re-run parseMailboxString / messages.getFull for every
     // row on every event. This is the main cause of scroll lag.
     this.correspondentCache = new Map();
+    // Promise of the user's own addresses, normalized; see getOwnAddresses.
+    this.ownAddresses = null;
+  }
+
+  /**
+   * Normalizes an address the way Thunderbird does before comparing it with
+   * the user's identities: lowercased, with any +tag dropped.
+   * @param {string} email - The email address.
+   * @returns {string} - The normalized address.
+   */
+  static normalizeAddress(email) {
+    return (email || "").toLowerCase().replace(/\+[^@]*@/, "@");
+  }
+
+  /**
+   * Retrieves the addresses of every identity on every account, loaded once
+   * and reloaded after invalidateOwnAddresses().
+   * @returns {Promise<Set<string>>} - The normalized addresses.
+   */
+  getOwnAddresses() {
+    this.ownAddresses ??= (async () => {
+      try {
+        const identities = await browser.identities.list();
+        return new Set(
+          identities.map(({ email }) => MailService.normalizeAddress(email)),
+        );
+      } catch (_e) {
+        return new Set();
+      }
+    })();
+    return this.ownAddresses;
+  }
+
+  /**
+   * Forgets the user's addresses after an identity changes, along with every
+   * correspondent resolved against them.
+   */
+  invalidateOwnAddresses() {
+    this.ownAddresses = null;
+    this.correspondentCache.clear();
   }
 
   /**
@@ -57,12 +97,15 @@ class MailService {
    * @returns {Promise<Author>} - The correspondent's email address.
    */
   async resolveCorrespondent(message, context = "inboxList") {
-    if (
-      message.folder?.type === "sent" &&
-      message.recipients.length > 0 &&
-      context === "inboxList"
-    ) {
-      return await Author.fromAuthor(message.recipients[0]);
+    // A message the user sent is shown by who it went to, decided per message
+    // like Thunderbird's Correspondent column. Not by folder: an Archive folder
+    // can also be the Sent folder, and holds received mail too.
+    if (context === "inboxList" && message.recipients.length > 0) {
+      const sender = await Author.parse(message.author);
+      const ownAddresses = await this.getOwnAddresses();
+      if (ownAddresses.has(MailService.normalizeAddress(sender))) {
+        return await Author.fromAuthor(message.recipients[0]);
+      }
     }
     if (
       message.author.includes("drive-shares-noreply@google.com") ||

@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "__MSG_extensionName__",
-  "version": "2.6.0",
+  "version": "2.6.1",
   "description": "__MSG_extensionDescription__",
   "author": "Kalos Tech",
   "homepage_url": "https://kalostech.es/",
@@ -50,7 +50,7 @@
     "gecko": {
       "id": "better-profile-pictures@kalostech.es",
       "strict_min_version": "128.0",
-      "strict_max_version": "157.*"
+      "strict_max_version": "158.*"
     }
   }
 }
