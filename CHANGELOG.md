@@ -5,6 +5,12 @@
 - Add automatic retry delay after 30 days when no profile picture is found
 - Options to disable and enable sources
 
+## 2.6.2 - 2026-11-05
+
+### Fixed
+
+- In a message list grouped by sort order, a group header no longer keeps the picture of the message shown in that row before it, for instance after deleting a message above it ([#3](https://github.com/El-Mundos/thunderbird-better-profile-pictures/issues/3))
+
 ## 2.6.1 - 2026-10-22
 
 ### Changed
