@@ -1239,6 +1239,36 @@ function getRenderedMessageRows(threadTree) {
 }
 
 /**
+ * Removes avatars from the grouped-by-sort header rows on screen.
+ *
+ * Thunderbird reuses row elements, so a row that showed a message can be
+ * refilled as a group header ("Yesterday"), for instance when a message
+ * above it is deleted. Headers are never painted, so nothing else would take
+ * that message's avatar back off.
+ * @param {Object} threadTree - The thread tree element.
+ */
+function clearGroupHeaderAvatars(threadTree) {
+  const view = threadTree?._view;
+  if (!view?.getFlagsAt || !threadTree._rows) {
+    return;
+  }
+  for (const [key, row] of threadTree._rows) {
+    const index = toRowIndex(key);
+    if (!Number.isInteger(index) || !row) {
+      continue;
+    }
+    try {
+      if (view.getFlagsAt(index) & MSG_VIEW_FLAG_DUMMY) {
+        cleanupDuplicateRecipientAvatars(row);
+        delete row[ROW_AVATAR_REFERENCE];
+      }
+    } catch (_e) {
+      // Skip any row we can't resolve.
+    }
+  }
+}
+
+/**
  * Repaints every currently-rendered row from the main-process paint cache.
  * Synchronous and cheap (bounded to visible rows); rows whose avatar is
  * unchanged are skipped by installOnRow, so this never flickers. Rows with no
@@ -1246,6 +1276,7 @@ function getRenderedMessageRows(threadTree) {
  * @param {Object} window - The content window.
  */
 function repaintVisibleFromCache(window) {
+  clearGroupHeaderAvatars(window?.threadTree);
   const cache = getAvatarPaintCache(window);
   if (cache.size === 0) {
     return;
@@ -1480,6 +1511,7 @@ var headerApi = class extends ExtensionCommon.ExtensionAPI {
           // running, and one painted by an earlier call would otherwise wait
           // for the next animation frame to be repainted, which a minimized
           // window never runs. Unchanged rows are skipped by installOnRow.
+          clearGroupHeaderAvatars(threadTree);
           for (const { row, msgKey } of getRenderedMessageRows(threadTree)) {
             const url = cache.get(msgKey);
             if (!url) {
