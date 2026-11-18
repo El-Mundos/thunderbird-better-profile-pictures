@@ -5,6 +5,12 @@
 - Add automatic retry delay after 30 days when no profile picture is found
 - Options to disable and enable sources
 
+## 2.6.3 - 2026-11-18
+
+### Changed
+
+- Compatible with Thunderbird 128 to 160
+
 ## 2.6.2 - 2026-11-05
 
 ### Fixed
